@@ -1,13 +1,12 @@
-<div align="center">
+# DealSim
 
-<img src="./static/image/MiroFish_logo_compressed.jpeg" alt="DealSim Logo" width="75%"/>
+<div align="center">
+<img src="./frontend/public/logo/dealsim_logo.png" alt="DealSim Logo" width="600"/>
+</div>
 
 DealSim：机构级交易压力测试引擎
-</br>
 <em>「给定这笔交易，在真实的资本严审下，什么会首先崩溃？」</em>
 
-[![GitHub Stars](https://img.shields.io/github/stars/666ghj/DealSim?style=flat-square&color=DAA520)](https://github.com/666ghj/DealSim/stargazers)
-[![Docker](https://img.shields.io/badge/Docker-Build-2496ED?style=flat-square&logo=docker&logoColor=white)](https://hub.docker.com/)
 
 [English](./README.md) | [中文文档](./README-ZH.md)
 
@@ -30,18 +29,6 @@ DealSim：机构级交易压力测试引擎
 4. **尽调重点识别 (Diligence Surfacing)**：合成文档中*未提及*但*应当具备*的关键信息缺口。
 5. **最终裁决 (Final Verdict)**：基于累积的压力测试结果，给出明确的 GO/NO-GO 投资建议。
 
-## 📸 系统截图
-
-*(当前 UI 聚焦于审计模式和 IC 准备报告的自动合成)*
-
-<div align="center">
-<table>
-<tr>
-<td><img src="./static/image/Screenshot/运行截图1.png" alt="DealSim 步骤 1" width="100%"/></td>
-<td><img src="./static/image/Screenshot/运行截图2.png" alt="DealSim 步骤 2" width="100%"/></td>
-</tr>
-</table>
-</div>
 
 ## 🚀 快速开始
 

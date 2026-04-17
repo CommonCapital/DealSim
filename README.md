@@ -1,13 +1,12 @@
-<div align="center">
+# DealSim
 
-<img src="./static/image/MiroFish_logo_compressed.jpeg" alt="DealSim Logo" width="75%"/>
+<div align="center">
+<img src="./frontend/public/logo/dealsim_logo.png" alt="DealSim Logo" width="600"/>
+</div>
 
 Institutional Deal Pressure-Testing Engine
-</br>
 <em>"Given this deal, what breaks first under real capital scrutiny?"</em>
 
-[![GitHub Stars](https://img.shields.io/github/stars/666ghj/DealSim?style=flat-square&color=DAA520)](https://github.com/666ghj/DealSim/stargazers)
-[![Docker](https://img.shields.io/badge/Docker-Build-2496ED?style=flat-square&logo=docker&logoColor=white)](https://hub.docker.com/)
 
 [English](./README.md) | [中文文档](./README-ZH.md)
 
@@ -30,18 +29,6 @@ The gap in modern finance is not information; it is **structured adversarial scr
 4. **Diligence Surfacing (Identifying Gaps)**: Synthesizing information that *is not* in the document but *should be*.
 5. **Final Verdict (Investment Decision)**: A GO/NO-GO recommendation based on the cumulative pressure-test.
 
-## 📸 System Screenshots
-
-*(UI currently focused on Audit Mode and IC Prep Report synthesis)*
-
-<div align="center">
-<table>
-<tr>
-<td><img src="./static/image/Screenshot/运行截图1.png" alt="DealSim Step 1" width="100%"/></td>
-<td><img src="./static/image/Screenshot/运行截图2.png" alt="DealSim Step 2" width="100%"/></td>
-</tr>
-</table>
-</div>
 
 ## 🚀 Quick Start
 
@@ -78,4 +65,3 @@ DealSim's simulation engine is powered by **[OASIS (Open Agent Social Interactio
 
 ---
 © 2026 DealSim. Institutional Deal Pressure-Testing Engine.
-# DealSim
