@@ -21,6 +21,22 @@ The gap in modern finance is not information; it is **structured adversarial scr
 - **Trigger Adversarial Audits**: Deploy specialized "Investment Archetypes" (The Skeptical Institutionalist, The Growth Optimist, The Financial Engineer) to stress-test your assumptions.
 - **Identify Fragility**: Discover "what breaks first" through a 5-stage simulated Investment Committee (IC) loop.
 
+---
+
+### 💡 Statement in Plain English
+
+*DealSim* is a software tool that stress-tests investment deals before they face real investors.
+
+**The problem:** When a fund manager or founder walks into an investment committee (IC) or investor meeting, that's usually the first time their deal gets seriously challenged. By then, weeks of work and real credibility are already on the line. Catching flaws that late is expensive and embarrassing.
+
+**What it does:** You upload your pitch deck, financial model, and assumptions memo. The system breaks the deal down into every specific claim you're making — things like "our retention is 120%" or "we'll exit at 12x." It then runs those claims through 50–100 simulated capital allocators (a skeptical VC, a conservative PE partner, a family office, a regulatory reviewer, etc.), each applying their real-world decision criteria. They attack your claims across five structured stages, essentially mimicking what a real IC process looks like.
+
+**The output** is a single clean report telling you: which claims break first, what the most common objections are, what information gaps will get flagged, which investor types would pass vs. proceed, and — crucially — exactly what evidence or changes would flip a "no" into a "maybe."
+
+**The value in one sentence:** It's a rehearsal room for your deal that tells you where you'll get destroyed before you walk into the room where it actually matters.
+
+---
+
 ## 🔄 The DealSim 5-Stage Audit
 
 1. **First Look (Quick Sanity Check)**: High-level review of deal structure and surface-level red flags.
