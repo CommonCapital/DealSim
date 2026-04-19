@@ -5,7 +5,7 @@
       <div class="nav-brand">DealSim</div>
       <div class="nav-links">
         <LanguageSwitcher />
-        <a href="https://github.com/666ghj/MiroFish" target="_blank" class="github-link">
+        <a href="https://github.com/CommonCapital/DealSim" target="_blank" class="github-link">
           {{ $t('nav.visitMethodology') }} <span class="arrow">↗</span>
         </a>
       </div>
