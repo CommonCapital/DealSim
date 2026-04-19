@@ -6,7 +6,13 @@
       <div class="nav-links">
         <LanguageSwitcher />
         <a href="https://github.com/CommonCapital/DealSim" target="_blank" class="github-link">
-          {{ $t('nav.visitMethodology') }} <span class="arrow">↗</span>
+          Repository <span class="arrow">↗</span>
+        </a>
+        <a href="https://www.linkedin.com/in/nursan-omarov-20a17a341/" target="_blank" class="linkedin-link">
+          <span class="linkedin-icon">in</span> LinkedIn <span class="arrow">↗</span>
+        </a>
+        <a href="https://www.linkedin.com/in/collinassam/" target="_blank" class="linkedin-link">
+          <span class="linkedin-icon">in</span> Contributor <span class="arrow">↗</span>
         </a>
       </div>
     </nav>
@@ -163,6 +169,10 @@
                     <span class="file-name">{{ file.name }}</span>
                     <button @click.stop="removeFile(index)" class="remove-btn">×</button>
                   </div>
+                  <div class="add-more-hint">
+                    <span class="add-more-icon">➕</span>
+                    <span class="add-more-text">{{ $t('home.addMoreFiles') }}</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -251,6 +261,8 @@ const triggerFileInput = () => {
 const handleFileSelect = (event) => {
   const selectedFiles = Array.from(event.target.files)
   addFiles(selectedFiles)
+  // Reset the input to allow selecting the same files again
+  event.target.value = ''
 }
 
 // 处理拖拽相关
@@ -373,6 +385,32 @@ const startSimulation = () => {
 }
 
 .github-link:hover {
+  opacity: 0.8;
+}
+
+.linkedin-link {
+  color: var(--white);
+  text-decoration: none;
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: opacity 0.2s;
+}
+
+.linkedin-icon {
+  background: #0077b5;
+  color: var(--white);
+  padding: 2px 4px;
+  border-radius: 2px;
+  font-weight: bold;
+  font-size: 0.8rem;
+  margin-right: 2px;
+}
+
+.linkedin-link:hover {
   opacity: 0.8;
 }
 
@@ -774,6 +812,35 @@ const startSimulation = () => {
   cursor: pointer;
   font-size: 1.2rem;
   color: #999;
+}
+
+.add-more-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  border: 1px dashed #CCC;
+  background: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: #666;
+  gap: 8px;
+}
+
+.add-more-hint:hover {
+  background: rgba(255, 69, 0, 0.05);
+  border-color: var(--orange);
+}
+
+.add-more-icon {
+  font-size: 1rem;
+  color: var(--orange);
+}
+
+.add-more-text {
+  font-weight: 500;
 }
 
 .console-divider {
