@@ -425,6 +425,42 @@ class SimulationRunner:
             # Pass max_rounds to the script if available in the state
             if state.total_rounds and state.total_rounds > 0:
                 cmd.extend(["--max-rounds", str(state.total_rounds)])
+
+            # Context Bridging: If this is an IC Room run, look for Market Sentiment from previous runs
+            if platform == "ic_room":
+                try:
+                    with open(config_path, 'r', encoding='utf-8') as f:
+                        sim_config = json.load(f)
+                    project_id = sim_config.get("project_id")
+                    
+                    if project_id:
+                        # Search for the most recent 'parallel' simulation in this project
+                        best_market_sim = None
+                        best_mtime = 0
+                        sims_root = os.path.dirname(os.path.dirname(config_path))
+                        
+                        for sid in os.listdir(sims_root):
+                            if sid == simulation_id: continue
+                            sdir = os.path.join(sims_root, sid)
+                            conf_p = os.path.join(sdir, "simulation_config.json")
+                            if os.path.exists(conf_p):
+                                with open(conf_p, 'r') as f2:
+                                    sc = json.load(f2)
+                                    # If it's a parallel/twitter/reddit run in the SAME project
+                                    if sc.get("project_id") == project_id and sc.get("simulation_type") in ["parallel", "twitter", "reddit"]:
+                                        mtime = os.path.getmtime(conf_p)
+                                        if mtime > best_mtime:
+                                            best_mtime = mtime
+                                            best_market_sim = sdir
+                        
+                        if best_market_sim:
+                            from .sentiment_summarizer import summarizer
+                            logger.info(f"IC Room: Bridging market sentiment from {best_market_sim}")
+                            market_text = summarizer.summarize_parallel_actions(best_market_sim)
+                            cmd.extend(["--market-sentiment", market_text])
+                except Exception as ex:
+                    logger.error(f"Failed to bridge market sentiment: {ex}")
+
             main_log_path = os.path.join(sim_dir, "simulation.log")
             main_log_file = open(main_log_path, 'w', encoding='utf-8')
             
