@@ -63,7 +63,9 @@
     "realitySeed": "01 / 投资案文本 (Memos/Models)",
     "supportedFormats": "支持多文件: PDF, MD, TXT, XLSX, CSV",
     "dragToUpload": "拖拽备忘录或模型上传",
-    "orBrowse": "或点击浏览文件系统",    "addMoreFiles": "点击添加更多文件",    "inputParams": "审计范围",
+    "orBrowse": "或点击浏览文件系统",
+    "addMoreFiles": "点击添加更多文件",
+    "inputParams": "审计范围",
     "simulationPrompt": ">_ 02 / 拷问重点",
     "promptPlaceholder": "// 用自然语言输入审计或压力测试需求（例：重点测试 CAC 逻辑的合理性，或债务在下行压力下的覆盖能力）",
     "engineBadge": "引擎: DealSim-Audit-V2",
@@ -74,7 +76,13 @@
     "layoutGraph": "图谱",
     "layoutSplit": "双栏",
     "layoutWorkbench": "工作台",
-    "stepNames": ["图谱构建", "环境搭建", "开始模拟", "报告生成", "深度互动"]
+    "stepNames": [
+      "图谱构建",
+      "环境搭建",
+      "开始模拟",
+      "报告生成",
+      "深度互动"
+    ]
   },
   "step1": {
     "ontologyGeneration": "本体生成",
@@ -144,7 +152,7 @@
     "setupComplete": "准备完成",
     "setupCompleteDesc": "模拟环境已准备完成，可以开始运行模拟",
     "roundsConfig": "模拟轮数设定",
-    "roundsConfigDesc": "MiroFish 自动规划推演现实 {hours} 小时，每轮代表现实 {minutesPerRound} 分钟时间流逝",
+    "roundsConfigDesc": "DealSim 自动规划推演现实 {hours} 小时，每轮代表现实 {minutesPerRound} 分钟时间流逝",
     "customToggle": "自定义",
     "roundsUnit": "轮",
     "estimatedDuration": "若Agent规模为100：预计耗时约 {minutes} 分钟",
@@ -256,7 +264,7 @@
     "selectChatTarget": "选择对话对象",
     "sendSurvey": "发送问卷调查到世界中",
     "reportAgentChat": "Report Agent - Chat",
-    "reportAgentDesc": "报告生成智能体的快速对话版本，可调用 4 种专业工具，拥有MiroFish的完整记忆",
+    "reportAgentDesc": "报告生成智能体的快速对话版本，可调用 4 DealSim",
     "toolInsightForge": "InsightForge 深度归因",
     "toolInsightForgeDesc": "对齐现实世界种子数据与模拟环境状态，结合Global/Local Memory机制，提供跨时空的深度归因分析",
     "toolPanoramaSearch": "PanoramaSearch 全景追踪",

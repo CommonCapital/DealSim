@@ -256,17 +256,21 @@ class ZepEntityReader:
             custom_labels = [l for l in labels if l not in ["Entity", "Node"]]
             
             if not custom_labels:
-                # 只有默认标签，跳过
-                continue
-            
-            # 如果指定了预定义类型，检查是否匹配
-            if defined_entity_types:
-                matching_labels = [l for l in custom_labels if l in defined_entity_types]
-                if not matching_labels:
+                # 如果只有默认标签且未指定特定类型，则将其视为 "Entity" 类别，不跳过
+                if not defined_entity_types:
+                    entity_type = "Entity"
+                else:
+                    # 如果指定了特定类型但当前节点不具备 custom_labels，则必然不匹配，跳过
                     continue
-                entity_type = matching_labels[0]
             else:
-                entity_type = custom_labels[0]
+                # 如果指定了预定义类型，检查是否匹配
+                if defined_entity_types:
+                    matching_labels = [l for l in custom_labels if l in defined_entity_types]
+                    if not matching_labels:
+                        continue
+                    entity_type = matching_labels[0]
+                else:
+                    entity_type = custom_labels[0]
             
             entity_types_found.add(entity_type)
             

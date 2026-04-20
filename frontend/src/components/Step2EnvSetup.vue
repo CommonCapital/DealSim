@@ -582,29 +582,39 @@
             </div>
           </div>
 
-          <!-- 详细人设 -->
-          <div class="modal-section" v-if="selectedProfile.persona">
-            <span class="section-label">{{ $t('step2.profileModalPersona') }}</span>
-            
-            <!-- 人设维度概览 -->
-            <div class="persona-dimensions">
-              <div class="dimension-card">
-                <span class="dim-title">{{ $t('step2.personaDimExperience') }}</span>
-                <span class="dim-desc">{{ $t('step2.personaDimExperienceDesc') }}</span>
-              </div>
-              <div class="dimension-card">
-                <span class="dim-title">{{ $t('step2.personaDimBehavior') }}</span>
-                <span class="dim-desc">{{ $t('step2.personaDimBehaviorDesc') }}</span>
-              </div>
-              <div class="dimension-card">
-                <span class="dim-title">{{ $t('step2.personaDimMemory') }}</span>
-                <span class="dim-desc">{{ $t('step2.personaDimMemoryDesc') }}</span>
-              </div>
-              <div class="dimension-card">
-                <span class="dim-title">{{ $t('step2.personaDimSocial') }}</span>
-                <span class="dim-desc">{{ $t('step2.personaDimSocialDesc') }}</span>
+            <!-- Institutional Mandate Section -->
+            <div class="modal-section mandate-section" v-if="selectedProfile.mandate_logic">
+              <span class="section-label">{{ $t('step2.profileModalPersona') }}</span>
+              <div class="mandate-grid">
+                <div class="mandate-item" v-for="(val, label) in selectedProfile.mandate_logic" :key="label">
+                  <span class="mandate-label">{{ label }}</span>
+                  <span class="mandate-value">{{ val }}</span>
+                </div>
               </div>
             </div>
+
+            <div class="modal-section" v-if="selectedProfile.persona">
+              <span class="section-label">Investment Context & Persona</span>
+              
+              <!-- 人设维度概览 -->
+              <div class="persona-dimensions">
+                <div class="dimension-card">
+                  <span class="dim-title">{{ $t('step2.personaDimExperience') }}</span>
+                  <span class="dim-desc">{{ $t('step2.personaDimExperienceDesc') }}</span>
+                </div>
+                <div class="dimension-card">
+                  <span class="dim-title">{{ $t('step2.personaDimBehavior') }}</span>
+                  <span class="dim-desc">{{ $t('step2.personaDimBehaviorDesc') }}</span>
+                </div>
+                <div class="dimension-card">
+                  <span class="dim-title">{{ $t('step2.personaDimMemory') }}</span>
+                  <span class="dim-desc">{{ $t('step2.personaDimMemoryDesc') }}</span>
+                </div>
+                <div class="dimension-card">
+                  <span class="dim-title">{{ $t('step2.personaDimSocial') }}</span>
+                  <span class="dim-desc">{{ $t('step2.personaDimSocialDesc') }}</span>
+                </div>
+              </div>
 
             <div class="persona-content">
               <p class="section-persona">{{ selectedProfile.persona }}</p>
@@ -2601,5 +2611,41 @@ onUnmounted(() => {
 .modal-leave-to .profile-modal {
   transform: scale(0.95) translateY(10px);
   opacity: 0;
+}
+
+/* Institutional Mandate Styles */
+.mandate-section {
+  margin-top: 24px;
+}
+
+.mandate-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.mandate-item {
+  background: #fdfdfd;
+  border: 1px solid #f0f0f0;
+  padding: 10px 12px;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mandate-label {
+  font-size: 10px;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+.mandate-value {
+  font-size: 13px;
+  color: #333;
+  font-weight: 600;
 }
 </style>

@@ -287,6 +287,9 @@ class SimulationManager:
             state.entities_count = filtered.filtered_count
             state.entity_types = list(filtered.entity_types)
             
+            logger.info(f"读取到 {filtered.total_count} 个原始节点, 过滤后保留 {filtered.filtered_count} 个实体")
+            logger.info(f"出现的实体类型: {state.entity_types}")
+            
             if progress_callback:
                 progress_callback(
                     "reading", 100,
@@ -296,9 +299,11 @@ class SimulationManager:
                 )
             
             if filtered.filtered_count == 0:
+                error_msg = t('api.noEntitiesFound') if hasattr(t, 'api.noEntitiesFound') else f"未在图谱 {state.graph_id} 中找到符合条件的实体 (总节点: {filtered.total_count})。请确保图谱构建成功且包含有效标签。"
                 state.status = SimulationStatus.FAILED
-                state.error = "没有找到符合条件的实体，请检查图谱是否正确构建"
+                state.error = error_msg
                 self._save_simulation_state(state)
+                logger.error(f"模拟准备失败: {error_msg}")
                 return state
             
             # ========== 阶段2: 生成IC成员 Mandate Profile ==========
@@ -506,7 +511,7 @@ class SimulationManager:
                 "parallel": f"python {scripts_dir}/run_parallel_simulation.py --config {config_path}",
             },
             "instructions": (
-                f"1. 激活conda环境: conda activate MiroFish\n"
+                f"1. 激活conda环境: conda activate DealSim\n"
                 f"2. 运行模拟 (脚本位于 {scripts_dir}):\n"
                 f"   - 单独运行Twitter: python {scripts_dir}/run_twitter_simulation.py --config {config_path}\n"
                 f"   - 单独运行Reddit: python {scripts_dir}/run_reddit_simulation.py --config {config_path}\n"

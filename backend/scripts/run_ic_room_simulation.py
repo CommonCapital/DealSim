@@ -154,5 +154,8 @@ if __name__ == "__main__":
     sim_dir = os.path.dirname(args.config)
     
     sim = ICRoomSimulation(sim_dir)
-    asyncio.run(sim.initialize())
-    asyncio.run(sim.run())
+    async def main():
+        await sim.initialize()
+        await sim.run()
+        
+    asyncio.run(main())

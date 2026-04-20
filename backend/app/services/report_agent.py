@@ -369,8 +369,8 @@ class ReportConsoleLogger:
         
         if self._file_handler:
             loggers_to_detach = [
-                'mirofish.report_agent',
-                'mirofish.zep_tools',
+                'dealsim.report_agent',
+                'dealsim.zep_tools',
             ]
             
             for logger_name in loggers_to_detach:

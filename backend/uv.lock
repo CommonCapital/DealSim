@@ -1247,7 +1247,7 @@ wheels = [
 ]
 
 [[package]]
-name = "mirofish-backend"
+name = "DealSim-backend"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [

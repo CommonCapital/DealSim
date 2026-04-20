@@ -92,9 +92,20 @@
               </div>
             </div>
             
+            <!-- Institutional Mandate Metrics (DealSim) -->
+            <div class="detail-section mandate-panel" v-if="selectedItem.data.mandate_logic">
+              <div class="section-title">Institutional Mandate:</div>
+              <div class="mandate-metrics-grid">
+                <div class="mandate-metric-item" v-for="(val, label) in selectedItem.data.mandate_logic" :key="label">
+                  <span class="metric-label">{{ label }}</span>
+                  <span class="metric-value">{{ val }}</span>
+                </div>
+              </div>
+            </div>
+
             <!-- Properties -->
             <div class="detail-section" v-if="selectedItem.data.attributes && Object.keys(selectedItem.data.attributes).length > 0">
-              <div class="section-title">Properties:</div>
+              <div class="section-title">Common Attributes:</div>
               <div class="properties-list">
                 <div v-for="(value, key) in selectedItem.data.attributes" :key="key" class="property-item">
                   <span class="property-key">{{ key }}:</span>
@@ -1469,5 +1480,47 @@ input:checked + .slider:before {
 .episode-tag.small {
   padding: 3px 6px;
   font-size: 9px;
+}
+
+/* Institutional Mandate Styles */
+.mandate-panel {
+  background: #f8fafc;
+  padding: 12px !important;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 20px;
+}
+
+.mandate-metrics-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.mandate-metric-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 4px;
+  border-bottom: 1px dashed #e2e8f0;
+}
+
+.mandate-metric-item:last-child {
+  border-bottom: none;
+}
+
+.metric-label {
+  font-size: 11px;
+  color: #64748b;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.metric-value {
+  font-size: 12px;
+  color: #0f172a;
+  font-weight: 700;
 }
 </style>

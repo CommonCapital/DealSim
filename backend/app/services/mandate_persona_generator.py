@@ -30,52 +30,52 @@ INVESTMENT_ARCHETYPES = [
     {"name": "Regulator / Compliance Reviewer", "description": "Focuses on antitrust, data privacy (GDPR), and ESG compliance.", "mandate": "Legal & Regulatory Compliance"}
 ]
 
-MANDATE_SYSTEM_PROMPT = """你是一个专业的机构投资决策顾问。
-你的任务是为投审会（IC Room）模拟生成具有特定投资“授权”（Mandate）的决策者人设。
+MANDATE_SYSTEM_PROMPT = """You are a professional institutional investment decision consultant.
+Your task is to generate detailed decision-maker personas for an IC Room (Investment Committee) simulation, each driven by specific investment "Mandates."
 
-## 核心原则
-传统的社交模拟人设关注性格（MBTI），但 DealSim 关注决策框架。
-你生成的人设必须由其「投资授权」和「约束条件」驱动，而不是情绪。
+## Core Principles
+Traditional social simulation personas focus on personality (MBTI), but DealSim focus on "Decision Frameworks."
+The personas you generate must be driven by their "Investment Mandates" and "Constraints," not social emotions.
 
-## 决策维度 (Mandate Dimensions)
-1. **Check Size (支票规模)**: 该成员代表的机构单笔投资容量。
-2. **Return Threshold (回报阈值)**: 核心 IRR、现金回报倍数 (MoC) 或 DPI 要求。
-3. **Stage Preference (阶段偏好)**: 早期、成长期、成熟期或二级市场。
-4. **Loss Aversion Profile (损失厌恶)**: 对本金亏损的恐惧程度与容忍度。
-5. **Sector Bias (行业偏见)**: 基于过往经验的行业喜好或刻板印象。
-6. **Time Horizon (时间地平线)**: 退出周期（如：3-5年 vs 10年以上）。
-7. **Portfolio Construction Logic (组合构建逻辑)**: 该投资如何拟合其现有资产配置。
-8. **Governance Sensitivity (治理敏感度)**: 对董事会席位、投后管理和合规的要求。
-9. **Exit Expectations (退出预期)**: IPO、并购或 S-Round 偏好。
+## Mandate Dimensions
+1. **Check Size**: The single investment capacity of the institution this member represents.
+2. **Return Threshold**: Core IRR, Cash-on-Cash (MoC), or DPI requirements.
+3. **Stage Preference**: Early, Growth, Buyout, or Secondary market.
+4. **Loss Aversion Profile**: Fear profile regarding principal loss tolerance.
+5. **Sector Bias**: Industry preferences or biases based on historical track record.
+6. **Time Horizon**: Exit cycle (e.g., 3-5 years vs. 10+ years).
+7. **Portfolio Construction Logic**: How this investment fits into their existing asset allocation.
+8. **Governance Sensitivity**: Requirements for board seats, post-investment management, and compliance.
+9. **Exit Expectations**: IPO, M&A, or S-Round preference.
 
-## 输出要求
-你必须输出有效的JSON格式数据，模拟一个具体的IC成员：
+## Output Requirements
+You must return valid JSON representing a specific IC member:
 
 ```json
 {
-    "name": "姓名/代号",
+    "name": "Full Name / Handle",
     "title": "MD | Partner | Director | LP Observer",
-    "archetype": "来自Archetype列表的名称",
-    "mandate_description": "该成员的具体投资使命及其关键决策参数（如支票规模、退出预期等，300字）",
+    "archetype": "Name from Archetype list",
+    "mandate_description": "Specific investment mission and key parameters of this member (e.g., check size, exit expectations, 300 words)",
     "decision_logic": {
-        "check_size": "量化描述",
-        "return_threshold": "如 >20% IRR",
+        "check_size": "Quantitative description",
+        "return_threshold": "e.g., >20% IRR",
         "stage_preference": "Early | Growth | Buyout",
         "loss_aversion_profile": "High | Medium | Low",
-        "sector_bias": "如: 软件行业偏好",
-        "time_horizon": "如: 7-10 Years",
-        "portfolio_logic": "如: 核心多样化资产",
+        "sector_bias": "e.g., Strategic bias towards SaaS",
+        "time_horizon": "e.g., 7-10 Years",
+        "portfolio_logic": "e.g., Core diversified assets",
         "governance_sensitivity": "High | Medium | Low",
         "exit_expectations": "IPO preference"
     },
-    "persona": "用于LLM模拟的核心Prompt（极其详细，包含其审查Claim时的攻击性风格。必须明确提及他们如何使用上述9个维度进行审判）",
-    "bio": "简短背景说明"
+    "persona": "Core prompt for LLM simulation (Extremely detailed, including their aggressive scrutiny style. Explicitly mention how they use the 9 dimensions to judge claims)",
+    "bio": "Brief background summary"
 }
 ```
 
-## 模拟风格
-- **攻击性**: IC成员应该是批判性的，他们不是在聊天，而是在质询。
-- **专业性**: 使用金融术语，关注结构、条款和宏观风险。
+## Simulation Style
+- **Aggressive**: IC members should be critical; they are not chatting, they are interrogating.
+- **Professional**: Use finance terminology, focus on structure, covenants, and macro risks.
 """
 
 class MandatePersonaGenerator:
@@ -111,8 +111,8 @@ class MandatePersonaGenerator:
         
         all_profiles = []
         
-        # 为了效率，我们让 LLM 一次性生成多个实例，或者循环生成
-        # 这里采用循环生成以保证质量，或者在一个 Prompt 中生成 instance sets
+        # To be efficient, we generate multiple instances at once
+        # For quality control, we loop through archetypes and generate sets
         for arch in base_archetypes:
             arch_instances = self._generate_archetype_instances(
                 arch=arch,
@@ -135,17 +135,17 @@ class MandatePersonaGenerator:
         """为特定 Archetype 生成多个差异化实例"""
         logger.info(f"Expanding archetype '{arch['name']}' into {instance_count} instances...")
         
-        user_message = f"""## 基础 Archetype
-名称: {arch['name']}
-基本描述: {arch['description']}
-核心授权: {arch['mandate']}
+        user_message = f"""## Base Archetype
+Name: {arch['name']}
+Description: {arch['description']}
+Core Mandate: {arch['mandate']}
 
-## 交易上下文
+## Deal Context
 {claim_context[:2000]}
 
-## 任务
-请基于上述 Archetype，生成 {instance_count} 个具有差异化的具体投资决策者人设。
-这些实例必须共享上述背景，但在 9 个决策维度上应有微小差异（例如：一个更稳健，一个更激进）。
+## Task
+Based on the above Archetype, generate {instance_count} differentiated investment decision-maker profiles.
+These instances must share the same background but have slight differences in the 9 mandate dimensions (e.g., one being more conservative, another more aggressive).
 """
 
         lang_instruction = get_language_instruction()
@@ -159,13 +159,45 @@ class MandatePersonaGenerator:
         try:
             result = self.llm_client.chat_json(messages=messages, temperature=0.7)
             profiles = result.get("profiles", [])
-            
             # 补齐必要字段
             for i, p in enumerate(profiles):
                 p["user_id"] = random.randint(10000, 99999)
                 p["username"] = f"{arch['name'].lower().replace(' ', '_')}_{i:02d}_{random.randint(10, 99)}"
-                if "persona" not in p:
-                    p["persona"] = p.get("mandate_description", "")
+                
+                # Fix for UI mapping: map title to profession
+                if "title" in p and "profession" not in p:
+                    p["profession"] = p["title"]
+                
+                # Format mandate logic for display in UI (English only)
+                logic = p.get("decision_logic", {})
+                mandate_display = "\n\n## Mandate Dimensions\n"
+                mandate_fields = [
+                    ("check_size", "Check Size"),
+                    ("return_threshold", "Return Threshold (IRR/MoC)"),
+                    ("stage_preference", "Stage Preference"),
+                    ("loss_aversion_profile", "Loss Aversion"),
+                    ("sector_bias", "Sector Bias"),
+                    ("time_horizon", "Time Horizon"),
+                    ("portfolio_logic", "Portfolio Construction"),
+                    ("governance_sensitivity", "Governance Sensitivity"),
+                    ("exit_expectations", "Exit Expectations")
+                ]
+                
+                for key, label in mandate_fields:
+                    val = logic.get(key, "N/A")
+                    mandate_display += f"- **{label}**: {val}\n"
+                
+                # Inject into persona and bio so it shows up in UI
+                if "persona" in p:
+                    p["persona"] = p["persona"] + mandate_display
+                else:
+                    p["persona"] = p.get("mandate_description", "") + mandate_display
+                
+                # Structured data for frontend grid
+                p["mandate_logic"] = {label: logic.get(key, "N/A") for key, label in mandate_fields}
+                
+                if "bio" in p:
+                    p["bio"] = p["bio"] + f" | {p.get('title', '')}"
                 
             return profiles
         except Exception as e:
@@ -174,7 +206,7 @@ class MandatePersonaGenerator:
 
 
     def _get_fallback_profiles(self, count: int) -> List[Dict[str, Any]]:
-        """回退逻辑：基于预定义的 Archetypes 生成"""
+        """Fallback logic: Generate based on predefined Archetypes"""
         profiles = []
         for i in range(count):
             arch = random.choice(INVESTMENT_ARCHETYPES)

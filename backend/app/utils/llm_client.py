@@ -6,7 +6,7 @@ LLM客户端封装
 import json
 import re
 from typing import Optional, Dict, Any, List
-from openai import OpenAI
+from openai import OpenAI, AsyncOpenAI
 
 from ..config import Config
 
@@ -28,6 +28,10 @@ class LLMClient:
             raise ValueError("LLM_API_KEY 未配置")
         
         self.client = OpenAI(
+            api_key=self.api_key,
+            base_url=self.base_url
+        )
+        self.async_client = AsyncOpenAI(
             api_key=self.api_key,
             base_url=self.base_url
         )
@@ -101,3 +105,49 @@ class LLMClient:
         except json.JSONDecodeError:
             raise ValueError(f"LLM返回的JSON格式无效: {cleaned_response}")
 
+
+    async def chat_async(
+        self,
+        messages: List[Dict[str, str]],
+        temperature: float = 0.7,
+        max_tokens: int = 4096,
+        response_format: Optional[Dict] = None
+    ) -> str:
+        """异步发送聊天请求"""
+        kwargs = {
+            "model": self.model,
+            "messages": messages,
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+        }
+        
+        if response_format:
+            kwargs["response_format"] = response_format
+        
+        response = await self.async_client.chat.completions.create(**kwargs)
+        content = response.choices[0].message.content
+        content = re.sub(r'<think>[\s\S]*?</think>', '', content).strip()
+        return content
+
+    async def chat_json_async(
+        self,
+        messages: List[Dict[str, str]],
+        temperature: float = 0.3,
+        max_tokens: int = 4096
+    ) -> Dict[str, Any]:
+        """异步发送聊天请求并返回JSON"""
+        response = await self.chat_async(
+            messages=messages,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            response_format={"type": "json_object"}
+        )
+        cleaned_response = response.strip()
+        cleaned_response = re.sub(r'^```(?:json)?\s*\n?', '', cleaned_response, flags=re.IGNORECASE)
+        cleaned_response = re.sub(r'\n?```\s*$', '', cleaned_response)
+        cleaned_response = cleaned_response.strip()
+
+        try:
+            return json.loads(cleaned_response)
+        except json.JSONDecodeError:
+            raise ValueError(f"LLM返回的JSON格式无效: {cleaned_response}")

@@ -211,9 +211,9 @@ ReACT-style synthesis across simulation output
 Report (6 sections) + Objection Table + Diligence List + Claim Fragility Map
 ```
 
-### What is forked from MiroFish
+### What is forked from Dealsim
 
-| MiroFish component | DealSim replacement |
+| DealSim component | DealSim replacement |
 |---|---|
 | `entity_extractor.py` | `claim_extractor.py` |
 | Social world ontology | Deal logic ontology |
@@ -234,7 +234,7 @@ A V1 run (100 personas × 5 stages × ~1,500 tokens each) sits at approximately 
 
 - Backend: Railway or Render free tier
 - Frontend: Vercel
-- Everything else similar to MiroFish.
+- Everything else similar to Dealsim.
 
 
 ---
