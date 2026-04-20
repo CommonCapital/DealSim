@@ -104,8 +104,9 @@ class ICRoomSimulation:
             prompt = f"""你正在参与投审会（IC Room）的讨论。
 当前阶段: {stage_name}
 
-【市场舆情情报】
-以下是近期公开市场（Twitter/Reddit）对该项目的核心反馈，请你在质询时将其作为参考依据之一：
+【质询依据：双维度情报】
+1. 内部逻辑节点 (Internal Logic Nodes): 包含项目 PPT 提案及财务模型中的多项投资声明。
+2. 专家思维节点 (Expert Thought Nodes): 以下是先前阶段行业专家及公开市场讨论中反馈出的核心“思维节点”，请你在质询时重点结合这些反馈：
 {market_context}
 
 你的授权（Mandate）: {member.get('mandate_description')}
