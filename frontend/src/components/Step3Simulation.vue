@@ -28,7 +28,15 @@
             </span>
             <span class="stat">
               <span class="stat-label">AUDIT PHASE</span>
-              <span class="stat-value stage-name">{{ runStatus.runner_status === 'running' ? (runStatus.current_stage || 'Active Scrutiny') : (runStatus.runner_status === 'completed' ? 'Audit Finished' : 'Initializing...') }}</span>
+              <span class="stat-value stage-name" :class="{ 'error-text': runStatus.runner_status === 'failed' }">
+                {{ 
+                  runStatus.runner_status === 'running' 
+                  ? (runStatus.current_stage || 'Active Scrutiny') 
+                  : (runStatus.runner_status === 'completed' 
+                    ? 'Audit Finished' 
+                    : (runStatus.runner_status === 'failed' ? 'Audit Failed' : 'Initializing...')) 
+                }}
+              </span>
             </span>
             <span class="stat">
               <span class="stat-label">SCRUTINY EVENTS</span>

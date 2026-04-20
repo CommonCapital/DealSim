@@ -164,6 +164,12 @@ These instances must share the same background but have slight differences in th
                 p["user_id"] = random.randint(10000, 99999)
                 p["username"] = f"{arch['name'].lower().replace(' ', '_')}_{i:02d}_{random.randint(10, 99)}"
                 
+                # OASIS Core Requirements (Prevent KeyError)
+                p["mbti"] = "Data-Driven"
+                p["age"] = random.randint(35, 65)
+                p["gender"] = random.choice(["male", "female", "non-binary"])
+                p["country"] = "Global"
+                
                 # Fix for UI mapping: map title to profession
                 if "title" in p and "profession" not in p:
                     p["profession"] = p["title"]

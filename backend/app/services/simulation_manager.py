@@ -341,31 +341,36 @@ class SimulationManager:
             
             state.profiles_count = len(profiles)
             
-            # 保存Profile文件
-            if progress_callback:
-                progress_callback(
-                    "generating_profiles", 95,
-                    t('progress.savingProfiles'),
-                    current=60,
-                    total=60
-                )
-            
-            # IC Room 统一使用一个 profile 文件，脚本会加载它
+            # 数据硬化：确保所有 Profile 都有必须的字段 (mbti, age, gender, country)
+            # 这里的 profiles 是从 generator 拿到的 list
+            import random
+            for p in profiles:
+                if 'mbti' not in p: p['mbti'] = "Data-Driven"
+                if 'age' not in p: p['age'] = random.randint(35, 65)
+                if 'gender' not in p: p['gender'] = random.choice(["male", "female", "non-binary"])
+                if 'country' not in p: p['country'] = "Global"
+
+            # 保存 IC 人设 (JSON)
             profile_path = os.path.join(sim_dir, "ic_profiles.json")
             with open(profile_path, 'w', encoding='utf-8') as f:
                 json.dump(profiles, f, ensure_ascii=False, indent=2)
-            
-            # 为了兼容旧脚本（如果还需要运行的话），也保存为 reddit/twitter 格式
+            logger.info(f"保存 IC 人设到: {profile_path}")
+
+            # 保存 Reddit 人设 (JSON)
             if state.enable_reddit:
-                with open(os.path.join(sim_dir, "reddit_profiles.json"), 'w', encoding='utf-8') as f:
+                reddit_path = os.path.join(sim_dir, "reddit_profiles.json")
+                with open(reddit_path, 'w', encoding='utf-8') as f:
                     json.dump(profiles, f, ensure_ascii=False, indent=2)
+                logger.info(f"保存 Reddit 人设到: {reddit_path}")
+
             # 为了兼容旧脚本和 Dual-World 运行脚本，确保生成 twitter_profiles.csv
             if state.enable_twitter:
                 csv_path = os.path.join(sim_dir, "twitter_profiles.csv")
                 import csv
                 with open(csv_path, 'w', newline='', encoding='utf-8') as f:
                     writer = csv.writer(f)
-                    writer.writerow(['user_id', 'name', 'username', 'user_char', 'description'])
+                    # 必须包含 mbti, age, gender, country 等 OASIS 核心列
+                    writer.writerow(['user_id', 'name', 'username', 'user_char', 'description', 'mbti', 'age', 'gender', 'country'])
                     for idx, p in enumerate(profiles):
                         # 构造 OASIS 要求的 Twitter CSV 格式
                         username = p.get('name', '').lower().replace(' ', '_') + f"_{idx}"
