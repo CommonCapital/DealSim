@@ -239,6 +239,26 @@ class SimulationRunner:
         # 尝试从文件加载
         state = cls._load_run_state(simulation_id)
         if state:
+            # Ghost Run Detection: Verify if PID is actually alive
+            if state.runner_status in [RunnerStatus.RUNNING, RunnerStatus.STARTING] and state.process_pid:
+                # If it's not in our active memory _processes, it might have survived a server restart or crashed
+                is_alive = False
+                if simulation_id in cls._processes:
+                    is_alive = True # Managed by current process pool
+                else:
+                    try:
+                        import os
+                        os.kill(state.process_pid, 0)
+                        is_alive = True
+                    except (OSError, ProcessLookupError):
+                        is_alive = False
+                
+                if not is_alive:
+                    logger.warning(f"检测到 Ghost Run: {simulation_id} (PID {state.process_pid} 已死亡). 正在标记为 FAILED.")
+                    state.runner_status = RunnerStatus.FAILED
+                    state.error = "Engine process terminated unexpectedly or crashed during initialization."
+                    cls._save_run_state(state)
+            
             cls._run_states[simulation_id] = state
         return state
     
@@ -337,8 +357,12 @@ class SimulationRunner:
         with open(config_path, 'r', encoding='utf-8') as f:
             config = json.load(f)
         
-        total_rounds = 5 if platform == "ic_room" else 0
-        if platform != "ic_room":
+        # 计算总轮次：优先使用传入的 max_rounds 参数
+        if max_rounds is not None:
+            total_rounds = max_rounds
+        elif platform == "ic_room":
+            total_rounds = 5
+        else:
             time_config = config.get("time_config", {})
             total_hours = time_config.get("total_simulation_hours", 72)
             minutes_per_round = time_config.get("minutes_per_round", 30)

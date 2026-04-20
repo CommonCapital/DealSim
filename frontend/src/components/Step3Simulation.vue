@@ -23,12 +23,12 @@
             <span class="stat">
               <span class="stat-label">STAGE</span>
               <span class="stat-value mono">
-                {{ runStatus.current_round || 0 }}<span class="stat-total">/5</span>
+                {{ runStatus.current_round || 0 }}<span class="stat-total">/{{ maxRounds || 5 }}</span>
               </span>
             </span>
             <span class="stat">
               <span class="stat-label">AUDIT PHASE</span>
-              <span class="stat-value stage-name">{{ runStatus.current_stage || 'Initializing...' }}</span>
+              <span class="stat-value stage-name">{{ runStatus.runner_status === 'running' ? (runStatus.current_stage || 'Active Scrutiny') : (runStatus.runner_status === 'completed' ? 'Audit Finished' : 'Initializing...') }}</span>
             </span>
             <span class="stat">
               <span class="stat-label">SCRUTINY EVENTS</span>
@@ -362,19 +362,24 @@ const doStartSimulation = async () => {
   emit('update-status', 'processing')
   
   try {
+    const hasGraph = props.projectData?.graph_id || props.graphData?.graph_id
     const params = {
       simulation_id: props.simulationId,
       platform: 'parallel',
       force: true,  // 强制重新开始
-      enable_graph_memory_update: true  // 开启动态图谱更新
+      enable_graph_memory_update: !!hasGraph  // 仅在有图谱ID时开启
     }
     
-    if (props.maxRounds) {
-      params.max_rounds = props.maxRounds
-      addLog(t('log.setMaxRounds', { rounds: props.maxRounds }))
+    if (props.maxRounds && !isNaN(parseInt(props.maxRounds))) {
+      params.max_rounds = parseInt(props.maxRounds)
+      addLog(t('log.setMaxRounds', { rounds: params.max_rounds }))
     }
     
-    addLog(t('log.graphMemoryUpdateEnabled'))
+    if (params.enable_graph_memory_update) {
+      addLog(t('log.graphMemoryUpdateEnabled'))
+    } else {
+      addLog('Simulation starting without live graph sync (Graph ID missing)')
+    }
     
     const res = await startSimulation(params)
     
@@ -391,8 +396,10 @@ const doStartSimulation = async () => {
       startStatusPolling()
       startDetailPolling()
     } else {
-      startError.value = res.error || '启动失败'
-      addLog(t('log.startFailed', { error: res.error || t('common.unknownError') }))
+      const errorMsg = res.error || 'Unknown Backend Error'
+      startError.value = errorMsg
+      addLog(`[System Audit] ✗ Start Failed: ${errorMsg}`)
+      addLog(t('log.startFailed', { error: errorMsg }))
       emit('update-status', 'error')
     }
   } catch (err) {
@@ -469,13 +476,15 @@ const fetchRunStatus = async () => {
       
       // 检测轮次/阶段变化并输出日志
       if (data.current_round > prevTwitterRound.value) {
-        const stageName = data.current_stage || 'Interrogation'
-        addLog(`[IC Audit] Stage ${data.current_round}/5 | ${stageName} | Events: ${data.total_actions_count || 0}`)
+        const totalRounds = props.maxRounds || 5
+        addLog(`[IC Audit] Stage ${data.current_round}/${totalRounds} | ${stageName} | Events: ${data.total_actions_count || 0}`)
         prevTwitterRound.value = data.current_round
       }
       
       // 检测模拟是否已完成（通过 runner_status 或阶段判断）
-      const isCompleted = data.runner_status === 'completed' || data.runner_status === 'stopped' || data.current_round >= 5
+      // 不再硬编码 5，而是根据 props.maxRounds 判断，若未提供则默认一个合理较大的值或仅依赖 runner_status
+      const totalThreshold = props.maxRounds || 999
+      const isCompleted = data.runner_status === 'completed' || data.runner_status === 'stopped' || data.current_round >= totalThreshold
       
       // 额外检查：如果后端还没来得及更新 runner_status，但平台已经报告完成
       // 通过检测 twitter_completed 和 reddit_completed 状态判断

@@ -73,15 +73,12 @@ class OasisAgentProfile:
             "created_at": self.created_at,
         }
         
-        # 添加额外人设信息（如果有）
-        if self.age:
-            profile["age"] = self.age
-        if self.gender:
-            profile["gender"] = self.gender
-        if self.mbti:
-            profile["mbti"] = self.mbti
-        if self.country:
-            profile["country"] = self.country
+        # 添加额外人设信息（确保关键字段始终存在，防止 OASIS 库 KeyError）
+        profile["age"] = self.age if self.age else 30
+        profile["gender"] = self.gender if self.gender else "other"
+        profile["mbti"] = self.mbti if self.mbti else "Data-Driven"
+        profile["country"] = self.country if self.country else "Global"
+        
         if self.profession:
             profile["profession"] = self.profession
         if self.interested_topics:
@@ -103,15 +100,12 @@ class OasisAgentProfile:
             "created_at": self.created_at,
         }
         
-        # 添加额外人设信息
-        if self.age:
-            profile["age"] = self.age
-        if self.gender:
-            profile["gender"] = self.gender
-        if self.mbti:
-            profile["mbti"] = self.mbti
-        if self.country:
-            profile["country"] = self.country
+        # 添加额外人设信息（确保关键字段始终存在，防止 OASIS 库 KeyError）
+        profile["age"] = self.age if self.age else 30
+        profile["gender"] = self.gender if self.gender else "other"
+        profile["mbti"] = self.mbti if self.mbti else "Data-Driven"
+        profile["country"] = self.country if self.country else "Global"
+        
         if self.profession:
             profile["profession"] = self.profession
         if self.interested_topics:

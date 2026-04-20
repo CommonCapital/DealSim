@@ -270,10 +270,29 @@ def _check_simulation_prepared(simulation_id: str) -> tuple:
         "twitter_profiles.csv"
     ]
     
-    # 检查文件是否存在
+    # 检查件是否存在
     existing_files = []
     missing_files = []
-    for f in required_files:
+    
+    # 动态检查逻辑：reddit_profiles.json 必须存在
+    if os.path.exists(os.path.join(simulation_dir, "reddit_profiles.json")):
+        existing_files.append("reddit_profiles.json")
+    else:
+        missing_files.append("reddit_profiles.json")
+        
+    # 动态检查逻辑：twitter_profiles 允许 .csv 或 .json
+    has_twitter = False
+    for ext in [".csv", ".json"]:
+        filename = f"twitter_profiles{ext}"
+        if os.path.exists(os.path.join(simulation_dir, filename)):
+            existing_files.append(filename)
+            has_twitter = True
+            break
+    if not has_twitter:
+        missing_files.append("twitter_profiles.csv (or .json)")
+        
+    # 其他固定件检查
+    for f in ["state.json", "simulation_config.json"]:
         file_path = os.path.join(simulation_dir, f)
         if os.path.exists(file_path):
             existing_files.append(f)
@@ -282,7 +301,7 @@ def _check_simulation_prepared(simulation_id: str) -> tuple:
     
     if missing_files:
         return False, {
-            "reason": "缺少必要文件",
+            "reason": f"缺少必要文件: {', '.join(missing_files)}",
             "missing_files": missing_files,
             "existing_files": existing_files
         }

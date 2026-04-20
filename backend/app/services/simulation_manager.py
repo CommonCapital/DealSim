@@ -359,8 +359,29 @@ class SimulationManager:
             if state.enable_reddit:
                 with open(os.path.join(sim_dir, "reddit_profiles.json"), 'w', encoding='utf-8') as f:
                     json.dump(profiles, f, ensure_ascii=False, indent=2)
+            # 为了兼容旧脚本和 Dual-World 运行脚本，确保生成 twitter_profiles.csv
             if state.enable_twitter:
-                # Twitter 格式通常是 CSV，这里我们先保存 JSON，待脚本适配
+                csv_path = os.path.join(sim_dir, "twitter_profiles.csv")
+                import csv
+                with open(csv_path, 'w', newline='', encoding='utf-8') as f:
+                    writer = csv.writer(f)
+                    writer.writerow(['user_id', 'name', 'username', 'user_char', 'description'])
+                    for idx, p in enumerate(profiles):
+                        # 构造 OASIS 要求的 Twitter CSV 格式
+                        username = p.get('name', '').lower().replace(' ', '_') + f"_{idx}"
+                        user_char = f"{p.get('bio', '')} {p.get('persona', '')}".replace('\n', ' ').replace('\r', ' ')
+                        description = p.get('mandate_description', p.get('bio', ''))[:160].replace('\n', ' ').replace('\r', ' ')
+                        
+                        writer.writerow([
+                            idx,
+                            p.get('name', 'IC Member'),
+                            username,
+                            user_char,
+                            description
+                        ])
+                logger.info(f"同时保存 Twitter CSV 格式人设到: {csv_path}")
+                
+                # 保留 JSON 副本以供前端显示或备用
                 with open(os.path.join(sim_dir, "twitter_profiles.json"), 'w', encoding='utf-8') as f:
                     json.dump(profiles, f, ensure_ascii=False, indent=2)
             
