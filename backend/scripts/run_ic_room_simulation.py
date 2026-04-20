@@ -95,15 +95,23 @@ class ICRoomSimulation:
         # 挑选活跃的IC成员参与本轮
         active_members = random.sample(self.profiles, k=min(len(self.profiles), 8))
         
+        # 注入市场情绪（如果有的话）
+        market_context = getattr(self, 'market_sentiment', "暂无公开市场情绪数据。")
+        
         for member in active_members:
             # LLM 决定该成员本轮针对哪个 Claim 发言
             # 构建 Prompt
             prompt = f"""你正在参与投审会（IC Room）的讨论。
 当前阶段: {stage_name}
+
+【市场舆情情报】
+以下是近期公开市场（Twitter/Reddit）对该项目的核心反馈，请你在质询时将其作为参考依据之一：
+{market_context}
+
 你的授权（Mandate）: {member.get('mandate_description')}
 你的决策逻辑: {json.dumps(member.get('decision_logic'))}
 
-请根据你的授权，针对本次交易的核心逻辑进行质询或评论。
+请根据你的授权和上述市场反馈，针对本次交易的核心逻辑进行质询或评论。
 你需要表现出专业、挑剔且具有洞察力的风格。
 
 输出要求：
@@ -148,12 +156,15 @@ class ICRoomSimulation:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="DealSim IC Room Simulator")
     parser.add_argument("--config", type=str, required=True, help="Path to simulation config")
+    parser.add_argument("--market-sentiment", type=str, default="", help="Summarized market sentiment context")
     args = parser.parse_args()
     
     # 提取目录
     sim_dir = os.path.dirname(args.config)
     
     sim = ICRoomSimulation(sim_dir)
+    sim.market_sentiment = args.market_sentiment
+    
     async def main():
         await sim.initialize()
         await sim.run()

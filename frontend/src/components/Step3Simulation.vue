@@ -12,7 +12,14 @@
               <path d="M19 8v11H5V8"></path>
               <path d="M10 12h4"></path>
             </svg>
-            <span class="platform-name">IC ROOM — Adversarial Interrogation</span>
+            <span class="platform-name">
+              {{ 
+                runStatus.platform === 'parallel' ? 'MARKET SENTIMENT MONITOR — Global Parallel Discourse' :
+                runStatus.platform === 'twitter' ? 'TWITTER BROADCAST MONITOR' :
+                runStatus.platform === 'reddit' ? 'REDDIT COMMUNITY INSIGHTS' :
+                'IC ROOM — Adversarial Interrogation'
+              }}
+            </span>
             <span v-if="runStatus.runner_status === 'completed'" class="status-badge">
               <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3">
                 <polyline points="20 6 9 17 4 12"></polyline>

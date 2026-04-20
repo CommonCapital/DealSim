@@ -102,6 +102,7 @@ class RoundSummary:
 class SimulationRunState:
     """模拟运行状态（实时）"""
     simulation_id: str
+    platform: str = "ic_room" # parallel, ic_room, twitter, reddit
     runner_status: RunnerStatus = RunnerStatus.IDLE
     
     # 进度信息
@@ -146,6 +147,34 @@ class SimulationRunState:
     
     # 进程ID（用于停止）
     process_pid: Optional[int] = None
+    
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "simulation_id": self.simulation_id,
+            "platform": self.platform,
+            "runner_status": self.runner_status,
+            "current_round": self.current_round,
+            "total_rounds": self.total_rounds,
+            "simulated_hours": self.simulated_hours,
+            "total_simulation_hours": self.total_simulation_hours,
+            "twitter_current_round": self.twitter_current_round,
+            "reddit_current_round": self.reddit_current_round,
+            "twitter_simulated_hours": self.twitter_simulated_hours,
+            "reddit_simulated_hours": self.reddit_simulated_hours,
+            "twitter_running": self.twitter_running,
+            "reddit_running": self.reddit_running,
+            "twitter_completed": self.twitter_completed,
+            "reddit_completed": self.reddit_completed,
+            "twitter_actions_count": self.twitter_actions_count,
+            "reddit_actions_count": self.reddit_actions_count,
+            "started_at": self.started_at,
+            "updated_at": self.updated_at,
+            "completed_at": self.completed_at,
+            "error": self.error,
+            "process_pid": self.process_pid,
+            "current_stage": self.current_stage,
+            "recent_actions": [a.to_dict() for a in self.recent_actions],
+        }
     
     def add_action(self, action: AgentAction):
         """添加动作到最近动作列表"""
@@ -275,6 +304,7 @@ class SimulationRunner:
             
             state = SimulationRunState(
                 simulation_id=simulation_id,
+                platform=data.get("platform", "ic_room"),
                 runner_status=RunnerStatus(data.get("runner_status", "idle")),
                 current_round=data.get("current_round", 0),
                 total_rounds=data.get("total_rounds", 0),
@@ -391,6 +421,10 @@ class SimulationRunner:
         
         try:
             cmd = [sys.executable, script_path, "--config", config_path]
+            
+            # Pass max_rounds to the script if available in the state
+            if state.total_rounds and state.total_rounds > 0:
+                cmd.extend(["--max-rounds", str(state.total_rounds)])
             main_log_path = os.path.join(sim_dir, "simulation.log")
             main_log_file = open(main_log_path, 'w', encoding='utf-8')
             
@@ -584,6 +618,25 @@ class SimulationRunner:
                 except subprocess.TimeoutExpired:
                     # 强制终止
                     logger.warning(f"进程未响应，强制终止: {simulation_id}")
+                    
+                    state = cls.get_run_state(simulation_id)
+                    if not state:
+                        state = SimulationRunState(
+                            simulation_id=simulation_id,
+                            platform=platform,
+                            runner_status=RunnerStatus.STARTING,
+                            total_rounds=total_rounds,
+                            total_simulation_hours=total_hours
+                        )
+                        state.started_at = datetime.now().isoformat()
+                        cls._run_states[simulation_id] = state
+                    else:
+                        state.platform = platform
+                        state.runner_status = RunnerStatus.STARTING
+                        state.total_rounds = total_rounds
+                        state.total_simulation_hours = total_hours
+                        state.started_at = datetime.now().isoformat()
+                    
                     subprocess.run(
                         ['taskkill', '/F', '/PID', str(process.pid), '/T'],
                         capture_output=True,
