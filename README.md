@@ -80,4 +80,15 @@ DealSim shifts from personality-driven AI to **Mandate-driven AI**. Each "Person
 DealSim's simulation engine is powered by **[OASIS (Open Agent Social Interaction Simulations)](https://github.com/camel-ai/oasis)**. We sincerely thank the CAMEL-AI team for their foundational work.
 
 ---
-© 2026 DealSim. Institutional Deal Pressure-Testing Engine.
+## 📄 License
+
+Built by **Nursan Omarov**.
+
+This software is provided for personal and internal business use only. 
+- **Allowed**: Personal use, modifications, and enhancements.
+- **Prohibited**: Monetization and distribution are strictly prohibited.
+
+See the [LICENSE](LICENSE) file for the full legal text.
+
+---
+© 2026 Nursan Omarov. DealSim - Institutional Deal Pressure-Testing Engine.

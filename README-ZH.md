@@ -80,4 +80,15 @@ DealSim 从传统的「性格驱动型」AI 转向了**「授权驱动型」(Man
 DealSim 的仿真引擎由 **[OASIS (Open Agent Social Interaction Simulations)](https://github.com/camel-ai/oasis)** 驱动。我们由衷感谢 CAMEL-AI 团队的开源贡献。
 
 ---
-© 2026 DealSim. 机构级交易压力测试引擎.
+## 📄 许可证
+
+由 **Nursan Omarov** 开发。
+
+本软件仅供个人和内部业务使用。
+- **允许**：个人使用、修改和增强。
+- **禁止**：严禁商业化（盈利）和分发。
+
+有关完整的法律文本，请参阅 [LICENSE](LICENSE) 文件。
+
+---
+© 2026 Nursan Omarov. DealSim - 机构级交易压力测试引擎.
