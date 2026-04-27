@@ -1538,7 +1538,7 @@ def start_simulation():
                     "error": t('api.maxRoundsInvalid')
                 }), 400
 
-        if platform not in ['twitter', 'reddit', 'parallel']:
+        if platform not in ['twitter', 'reddit', 'parallel', 'ic_room']:
             return jsonify({
                 "success": False,
                 "error": t('api.invalidPlatform', platform=platform)

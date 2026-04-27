@@ -61,11 +61,25 @@ class ICRoomSimulation:
             with open(self.profiles_path, 'r', encoding='utf-8') as f:
                 self.profiles = json.load(f)
         
+        self.claims = []
+        
         # 从 Zep 图谱或 state.json 加载 Claims
         state_path = os.path.join(self.simulation_dir, "state.json")
         if os.path.exists(state_path):
             with open(state_path, 'r', encoding='utf-8') as f:
                 self.state = json.load(f)
+            
+            # Fetch nodes from Zep
+            graph_id = self.state.get("graph_id")
+            if graph_id:
+                try:
+                    from app.services.zep_entity_reader import ZepEntityReader
+                    reader = ZepEntityReader()
+                    filtered = reader.filter_defined_entities(graph_id=graph_id)
+                    self.claims = filtered.entities
+                    logger.info(f"Fetched {len(self.claims)} company nodes from graph {graph_id}")
+                except Exception as e:
+                    logger.error(f"Failed to fetch nodes from Zep: {e}")
         
         logger.info(f"Initialized IC Room with {len(self.profiles)} members.")
 
@@ -98,6 +112,11 @@ class ICRoomSimulation:
         # 注入市场情绪（如果有的话）
         market_context = getattr(self, 'market_sentiment', "暂无公开市场情绪数据。")
         
+        # 准备 Claims 文本
+        claims_text = "\n".join([f"- {c.name}: {c.summary}" for c in self.claims[:12]])
+        if not claims_text:
+            claims_text = "暂无具体的内部逻辑节点数据。"
+
         for member in active_members:
             # LLM 决定该成员本轮针对哪个 Claim 发言
             # 构建 Prompt
@@ -105,8 +124,10 @@ class ICRoomSimulation:
 当前阶段: {stage_name}
 
 【质询依据：双维度情报】
-1. 内部逻辑节点 (Internal Logic Nodes): 包含项目 PPT 提案及财务模型中的多项投资声明。
-2. 专家思维节点 (Expert Thought Nodes): 以下是先前阶段行业专家及公开市场讨论中反馈出的核心“思维节点”，请你在质询时重点结合这些反馈：
+1. 内部逻辑节点 (Internal Logic Nodes): 包含项目提案中的核心投资声明与事实节点：
+{claims_text}
+
+2. 专家思维节点 (Expert Thought Nodes): 以下是公开市场（Twitter/Reddit）中反馈出的核心质疑点，请你在质询时重点结合这些反馈：
 {market_context}
 
 你的授权（Mandate）: {member.get('mandate_description')}
@@ -138,9 +159,6 @@ class ICRoomSimulation:
                     content=response
                 )
                 logger.info(f"[{member.get('name')}] added to discussion in {stage_name}")
-                
-                # 模拟思考延迟
-                await asyncio.sleep(0.5)
             except Exception as e:
                 logger.error(f"Agent {member.get('name')} interaction failed: {e}")
 

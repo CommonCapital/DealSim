@@ -212,7 +212,10 @@
     "forceStopSuccess": "模拟已强制停止",
     "forceStopFailed": "强制停止失败: {error}",
     "startGenerateReportBtn": "开始生成结果报告",
-    "generatingReportBtn": "启动中..."
+    "generatingReportBtn": "启动中...",
+    "activeScrutiny": "活跃审计",
+    "startICRoomBtn": "开始 IC 审议室拷问",
+    "proceedToICRoom": "进入 IC 审议室"
   },
   "step4": {
     "generatingSection": "正在生成{title}...",

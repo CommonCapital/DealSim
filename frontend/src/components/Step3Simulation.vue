@@ -68,11 +68,16 @@
         <button 
           class="action-btn primary"
           :disabled="phase !== 2 || isGeneratingReport"
-          @click="handleNextStep"
+          @click="!hasICRoomStarted ? startICRoom() : handleNextStep()"
         >
           <span v-if="isGeneratingReport" class="loading-spinner-small"></span>
-          {{ isGeneratingReport ? $t('step3.generatingReportBtn') : $t('step3.startGenerateReportBtn') }}
-          <span v-if="!isGeneratingReport" class="arrow-icon">→</span>
+          <template v-if="!hasICRoomStarted">
+            {{ $t('step3.startICRoomBtn') }} ➝
+          </template>
+          <template v-else>
+            {{ isGeneratingReport ? $t('step3.generatingReportBtn') : $t('step3.startGenerateReportBtn') }}
+            <span class="arrow-icon">→</span>
+          </template>
         </button>
       </div>
     </div>
@@ -311,6 +316,7 @@ const startError = ref(null)
 const runStatus = ref({})
 const allActions = ref([]) // 所有动作（增量累积）
 const actionIds = ref(new Set()) // 用于去重的动作ID集合
+const hasICRoomStarted = ref(false)
 const scrollContainer = ref(null)
 
 // Computed
@@ -326,6 +332,11 @@ const twitterActionsCount = computed(() => {
 
 const redditActionsCount = computed(() => {
   return allActions.value.filter(a => a.platform === 'reddit').length
+})
+
+const isParallelDone = computed(() => {
+  // 如果完成了第一阶段模拟且尚未开始 IC Room
+  return phase.value === 2 && !hasICRoomStarted.value
 })
 
 // 格式化模拟流逝时间（根据轮次和每轮分钟数计算）
@@ -355,6 +366,7 @@ const resetAllState = () => {
   actionIds.value = new Set()
   prevTwitterRound.value = 0
   prevRedditRound.value = 0
+  hasICRoomStarted.value = false
   startError.value = null
   isStarting.value = false
   isStopping.value = false
@@ -362,38 +374,58 @@ const resetAllState = () => {
 }
 
 // 启动模拟
-const doStartSimulation = async () => {
+const doStartSimulation = async (platformOverride = null) => {
   if (!props.simulationId) {
     addLog(t('log.errorMissingSimId'))
     return
   }
 
-  // 先重置所有状态，确保不会受到上一次模拟的影响
-  resetAllState()
+  const targetPlatform = platformOverride || 'parallel'
+  
+  // 如果不是覆盖平台启动，则重置所有状态
+  if (!platformOverride) {
+    resetAllState()
+  } else {
+    // 仅重置运行相关的状态，保留 actions
+    phase.value = 0
+    startError.value = null
+    isStarting.value = false
+    isStopping.value = false
+    stopPolling()
+    prevTwitterRound.value = 0
+    prevRedditRound.value = 0
+  }
   
   isStarting.value = true
   startError.value = null
-  addLog(t('log.startingDualSim')) // Keeps localization key but context is rebranded
+  
+  if (targetPlatform === 'ic_room') {
+    addLog(t('log.startingReportGen')) // TODO: add better log for starting IC
+    addLog("Initializing IC Room Interrogation...")
+  } else {
+    addLog(t('log.startingDualSim'))
+  }
+  
   emit('update-status', 'processing')
   
   try {
     const hasGraph = props.projectData?.graph_id || props.graphData?.graph_id
     const params = {
       simulation_id: props.simulationId,
-      platform: 'parallel',
-      force: true,  // 强制重新开始
-      enable_graph_memory_update: !!hasGraph  // 仅在有图谱ID时开启
+      platform: targetPlatform,
+      force: !platformOverride,  // 仅在初始启动时强制清理
+      enable_graph_memory_update: !!hasGraph
     }
     
-    if (props.maxRounds && !isNaN(parseInt(props.maxRounds))) {
+    // IC Room 固定 5 轮，Parallel 使用 props 或默认
+    if (targetPlatform === 'ic_room') {
+      params.max_rounds = 5
+    } else if (props.maxRounds && !isNaN(parseInt(props.maxRounds))) {
       params.max_rounds = parseInt(props.maxRounds)
-      addLog(t('log.setMaxRounds', { rounds: params.max_rounds }))
     }
     
-    if (params.enable_graph_memory_update) {
-      addLog(t('log.graphMemoryUpdateEnabled'))
-    } else {
-      addLog('Simulation starting without live graph sync (Graph ID missing)')
+    if (params.max_rounds) {
+      addLog(t('log.setMaxRounds', { rounds: params.max_rounds }))
     }
     
     const res = await startSimulation(params)
@@ -492,13 +524,18 @@ const fetchRunStatus = async () => {
       // 检测轮次/阶段变化并输出日志
       if (data.current_round > prevTwitterRound.value) {
         const totalRounds = props.maxRounds || 5
+        const stageName = data.current_stage || t('step3.activeScrutiny')
         addLog(`[IC Audit] Stage ${data.current_round}/${totalRounds} | ${stageName} | Events: ${data.total_actions_count || 0}`)
         prevTwitterRound.value = data.current_round
       }
       
-      // 检测模拟是否已完成（通过 runner_status 或阶段判断）
-      // 不再硬编码 5，而是根据 props.maxRounds 判断，若未提供则默认一个合理较大的值或仅依赖 runner_status
-      const totalThreshold = props.maxRounds || 999
+      // 检测模拟是否已完成
+      // Parallel 阶段使用配置的轮数，IC Room 阶段固定 5 轮
+      let totalThreshold = props.maxRounds || data.total_rounds || 999
+      if (data.platform === 'ic_room') {
+        totalThreshold = 5
+      }
+      
       const isCompleted = data.runner_status === 'completed' || data.runner_status === 'stopped' || data.current_round >= totalThreshold
       
       // 额外检查：如果后端还没来得及更新 runner_status，但平台已经报告完成
@@ -641,6 +678,12 @@ const handleNextStep = async () => {
     return
   }
   
+  // Sequential Workflow: If parallel just finished, start IC Room
+  if (isParallelDone.value && !hasICRoomStarted.value) {
+    startICRoom()
+    return
+  }
+  
   isGeneratingReport.value = true
   addLog(t('log.startingReportGen'))
   
@@ -664,6 +707,13 @@ const handleNextStep = async () => {
     addLog(t('log.reportGenException', { error: err.message }))
     isGeneratingReport.value = false
   }
+}
+
+// 启动 IC Room 审议
+const startICRoom = async () => {
+  addLog(t('log.proceedToICRoom'))
+  hasICRoomStarted.value = true
+  await doStartSimulation('ic_room')
 }
 
 // Scroll log to bottom

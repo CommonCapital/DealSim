@@ -222,7 +222,10 @@
     "forceStopSuccess": "Simulation force stopped",
     "forceStopFailed": "Force stop failed: {error}",
     "startGenerateReportBtn": "Generate Report",
-    "generatingReportBtn": "Starting..."
+    "generatingReportBtn": "Starting...",
+    "activeScrutiny": "Active Scrutiny",
+    "startICRoomBtn": "Start IC Room Interrogation",
+    "proceedToICRoom": "Proceed to IC Room Interrogation"
   },
   "step4": {
     "generatingSection": "Generating {title}...",

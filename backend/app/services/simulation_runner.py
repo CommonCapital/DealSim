@@ -152,52 +152,12 @@ class SimulationRunState:
         return {
             "simulation_id": self.simulation_id,
             "platform": self.platform,
-            "runner_status": self.runner_status,
-            "current_round": self.current_round,
-            "total_rounds": self.total_rounds,
-            "simulated_hours": self.simulated_hours,
-            "total_simulation_hours": self.total_simulation_hours,
-            "twitter_current_round": self.twitter_current_round,
-            "reddit_current_round": self.reddit_current_round,
-            "twitter_simulated_hours": self.twitter_simulated_hours,
-            "reddit_simulated_hours": self.reddit_simulated_hours,
-            "twitter_running": self.twitter_running,
-            "reddit_running": self.reddit_running,
-            "twitter_completed": self.twitter_completed,
-            "reddit_completed": self.reddit_completed,
-            "twitter_actions_count": self.twitter_actions_count,
-            "reddit_actions_count": self.reddit_actions_count,
-            "started_at": self.started_at,
-            "updated_at": self.updated_at,
-            "completed_at": self.completed_at,
-            "error": self.error,
-            "process_pid": self.process_pid,
-            "current_stage": self.current_stage,
-            "recent_actions": [a.to_dict() for a in self.recent_actions],
-        }
-    
-    def add_action(self, action: AgentAction):
-        """添加动作到最近动作列表"""
-        self.recent_actions.insert(0, action)
-        if len(self.recent_actions) > self.max_recent_actions:
-            self.recent_actions = self.recent_actions[:self.max_recent_actions]
-        
-        if action.platform == "twitter":
-            self.twitter_actions_count += 1
-        else:
-            self.reddit_actions_count += 1
-        
-        self.updated_at = datetime.now().isoformat()
-    
-    def to_dict(self) -> Dict[str, Any]:
-        return {
-            "simulation_id": self.simulation_id,
             "runner_status": self.runner_status.value,
             "current_round": self.current_round,
             "total_rounds": self.total_rounds,
+            "progress_percent": round(self.current_round / max(self.total_rounds, 1) * 100, 1),
             "simulated_hours": self.simulated_hours,
             "total_simulation_hours": self.total_simulation_hours,
-            "progress_percent": round(self.current_round / max(self.total_rounds, 1) * 100, 1),
             # 各平台独立轮次和时间
             "twitter_current_round": self.twitter_current_round,
             "reddit_current_round": self.reddit_current_round,
@@ -215,7 +175,23 @@ class SimulationRunState:
             "completed_at": self.completed_at,
             "error": self.error,
             "process_pid": self.process_pid,
+            "current_stage": self.current_stage,
+            "recent_actions": [a.to_dict() for a in self.recent_actions],
         }
+
+    def add_action(self, action: AgentAction):
+        """添加动作到最近动作列表"""
+        self.recent_actions.insert(0, action)
+        if len(self.recent_actions) > self.max_recent_actions:
+            self.recent_actions = self.recent_actions[:self.max_recent_actions]
+        
+        if action.platform == "twitter":
+            self.twitter_actions_count += 1
+        else:
+            self.reddit_actions_count += 1
+        
+        self.updated_at = datetime.now().isoformat()
+
     
     def to_detail_dict(self) -> Dict[str, Any]:
         """包含最近动作的详细信息"""
@@ -400,6 +376,7 @@ class SimulationRunner:
         
         state = SimulationRunState(
             simulation_id=simulation_id,
+            platform=platform,
             runner_status=RunnerStatus.STARTING,
             total_rounds=total_rounds,
             started_at=datetime.now().isoformat(),
@@ -656,22 +633,10 @@ class SimulationRunner:
                     logger.warning(f"进程未响应，强制终止: {simulation_id}")
                     
                     state = cls.get_run_state(simulation_id)
-                    if not state:
-                        state = SimulationRunState(
-                            simulation_id=simulation_id,
-                            platform=platform,
-                            runner_status=RunnerStatus.STARTING,
-                            total_rounds=total_rounds,
-                            total_simulation_hours=total_hours
-                        )
-                        state.started_at = datetime.now().isoformat()
-                        cls._run_states[simulation_id] = state
-                    else:
-                        state.platform = platform
-                        state.runner_status = RunnerStatus.STARTING
-                        state.total_rounds = total_rounds
-                        state.total_simulation_hours = total_hours
-                        state.started_at = datetime.now().isoformat()
+                    if state:
+                        state.runner_status = RunnerStatus.STOPPED
+                        state.completed_at = datetime.now().isoformat()
+
                     
                     subprocess.run(
                         ['taskkill', '/F', '/PID', str(process.pid), '/T'],
