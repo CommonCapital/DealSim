@@ -124,7 +124,7 @@ class ClaimExtractor:
         result = self.llm_client.chat_json(
             messages=messages,
             temperature=0.2, # 降低随机性，保证逻辑严密
-            max_tokens=4096
+            max_tokens=8192
         )
         
         return self._post_process(result)

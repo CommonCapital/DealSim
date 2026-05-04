@@ -66,6 +66,14 @@ class LLMClient:
             kwargs["response_format"] = response_format
         
         response = self.client.chat.completions.create(**kwargs)
+        
+        # 检查是否因为长度限制而截断
+        finish_reason = response.choices[0].finish_reason
+        if finish_reason == 'length':
+            from ..utils.logger import get_logger
+            logger = get_logger('dealsim.llm')
+            logger.warning(f"LLM 响应被截断 (finish_reason: {finish_reason}). 建议增加 max_tokens。")
+            
         content = response.choices[0].message.content
         # 部分模型（如MiniMax M2.5）会在content中包含<think>思考内容，需要移除
         content = re.sub(r'<think>[\s\S]*?</think>', '', content).strip()
@@ -75,7 +83,7 @@ class LLMClient:
         self,
         messages: List[Dict[str, str]],
         temperature: float = 0.3,
-        max_tokens: int = 4096
+        max_tokens: int = 8192  # 增加默认值
     ) -> Dict[str, Any]:
         """
         发送聊天请求并返回JSON
