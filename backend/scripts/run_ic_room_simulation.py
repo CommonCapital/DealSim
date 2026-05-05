@@ -176,6 +176,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="DealSim IC Room Simulator")
     parser.add_argument("--config", type=str, required=True, help="Path to simulation config")
     parser.add_argument("--market-sentiment", type=str, default="", help="Summarized market sentiment context")
+    parser.add_argument("--max-rounds", type=int, default=5, help="Maximum number of rounds to simulate")
     args = parser.parse_args()
     
     # 提取目录

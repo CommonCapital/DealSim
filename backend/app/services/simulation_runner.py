@@ -122,10 +122,12 @@ class SimulationRunState:
     reddit_running: bool = False
     twitter_actions_count: int = 0
     reddit_actions_count: int = 0
+    ic_room_actions_count: int = 0
     
     # 平台完成状态（通过检测 actions.jsonl 中的 simulation_end 事件）
     twitter_completed: bool = False
     reddit_completed: bool = False
+    ic_room_completed: bool = False
     
     # 每轮摘要
     rounds: List[RoundSummary] = field(default_factory=list)
@@ -167,9 +169,11 @@ class SimulationRunState:
             "reddit_running": self.reddit_running,
             "twitter_completed": self.twitter_completed,
             "reddit_completed": self.reddit_completed,
+            "ic_room_completed": self.ic_room_completed,
             "twitter_actions_count": self.twitter_actions_count,
             "reddit_actions_count": self.reddit_actions_count,
-            "total_actions_count": self.twitter_actions_count + self.reddit_actions_count,
+            "ic_room_actions_count": self.ic_room_actions_count,
+            "total_actions_count": self.twitter_actions_count + self.reddit_actions_count + self.ic_room_actions_count,
             "started_at": self.started_at,
             "updated_at": self.updated_at,
             "completed_at": self.completed_at,
@@ -187,8 +191,10 @@ class SimulationRunState:
         
         if action.platform == "twitter":
             self.twitter_actions_count += 1
-        else:
+        elif action.platform == "reddit":
             self.reddit_actions_count += 1
+        elif action.platform == "ic_room":
+            self.ic_room_actions_count += 1
         
         self.updated_at = datetime.now().isoformat()
 
@@ -295,8 +301,10 @@ class SimulationRunner:
                 reddit_running=data.get("reddit_running", False),
                 twitter_completed=data.get("twitter_completed", False),
                 reddit_completed=data.get("reddit_completed", False),
+                ic_room_completed=data.get("ic_room_completed", False),
                 twitter_actions_count=data.get("twitter_actions_count", 0),
                 reddit_actions_count=data.get("reddit_actions_count", 0),
+                ic_room_actions_count=data.get("ic_room_actions_count", 0),
                 started_at=data.get("started_at"),
                 updated_at=data.get("updated_at", datetime.now().isoformat()),
                 completed_at=data.get("completed_at"),
@@ -502,20 +510,23 @@ class SimulationRunner:
         
         try:
             while process.poll() is None:
-                if os.path.exists(twitter_log):
+                if state.platform in ["twitter", "parallel"] and os.path.exists(twitter_log):
                     positions["twitter"] = cls._read_action_log(twitter_log, positions["twitter"], state, "twitter")
-                if os.path.exists(reddit_log):
+                if state.platform in ["reddit", "parallel"] and os.path.exists(reddit_log):
                     positions["reddit"] = cls._read_action_log(reddit_log, positions["reddit"], state, "reddit")
-                if os.path.exists(ic_log):
+                if state.platform == "ic_room" and os.path.exists(ic_log):
                     positions["ic_room"] = cls._read_action_log(ic_log, positions["ic_room"], state, "ic_room")
                 
                 cls._save_run_state(state)
                 time.sleep(2)
             
             # Final sweep
-            if os.path.exists(twitter_log): cls._read_action_log(twitter_log, positions["twitter"], state, "twitter")
-            if os.path.exists(reddit_log): cls._read_action_log(reddit_log, positions["reddit"], state, "reddit")
-            if os.path.exists(ic_log): cls._read_action_log(ic_log, positions["ic_room"], state, "ic_room")
+            if state.platform in ["twitter", "parallel"] and os.path.exists(twitter_log):
+                cls._read_action_log(twitter_log, positions["twitter"], state, "twitter")
+            if state.platform in ["reddit", "parallel"] and os.path.exists(reddit_log):
+                cls._read_action_log(reddit_log, positions["reddit"], state, "reddit")
+            if state.platform == "ic_room" and os.path.exists(ic_log):
+                cls._read_action_log(ic_log, positions["ic_room"], state, "ic_room")
             
             state.runner_status = RunnerStatus.COMPLETED if process.returncode == 0 else RunnerStatus.FAILED
             state.completed_at = datetime.now().isoformat()
@@ -547,6 +558,7 @@ class SimulationRunner:
                             if data["event_type"] == "simulation_end":
                                 if platform == "twitter": state.twitter_completed = True
                                 elif platform == "reddit": state.reddit_completed = True
+                                elif platform == "ic_room": state.ic_room_completed = True
                             continue
                         
                         action = AgentAction(
@@ -600,7 +612,8 @@ class SimulationRunner:
             return False
         if reddit_enabled and not state.reddit_completed:
             return False
-        # IC Room 暂时通过进程结束判断，但也保留扩展位
+        if ic_enabled and not state.ic_room_completed:
+            return False
         
         # 至少有一个平台被启用且已完成
         return twitter_enabled or reddit_enabled or ic_enabled
@@ -810,22 +823,33 @@ class SimulationRunner:
         
         # 读取 Twitter 动作文件（根据文件路径自动设置 platform 为 twitter）
         twitter_actions_log = os.path.join(sim_dir, "twitter", "actions.jsonl")
-        if not platform or platform == "twitter":
+        if not platform or platform == "twitter" or platform == "parallel":
             actions.extend(cls._read_actions_from_file(
                 twitter_actions_log,
                 default_platform="twitter",  # 自动填充 platform 字段
-                platform_filter=platform,
+                platform_filter="twitter" if platform == "twitter" else None,
                 agent_id=agent_id, 
                 round_num=round_num
             ))
         
         # 读取 Reddit 动作文件（根据文件路径自动设置 platform 为 reddit）
         reddit_actions_log = os.path.join(sim_dir, "reddit", "actions.jsonl")
-        if not platform or platform == "reddit":
+        if not platform or platform == "reddit" or platform == "parallel":
             actions.extend(cls._read_actions_from_file(
                 reddit_actions_log,
                 default_platform="reddit",  # 自动填充 platform 字段
-                platform_filter=platform,
+                platform_filter="reddit" if platform == "reddit" else None,
+                agent_id=agent_id,
+                round_num=round_num
+            ))
+            
+        # 读取 IC Room 动作文件
+        ic_actions_log = os.path.join(sim_dir, "ic_actions.jsonl")
+        if not platform or platform == "ic_room":
+            actions.extend(cls._read_actions_from_file(
+                ic_actions_log,
+                default_platform="ic_room",
+                platform_filter="ic_room" if platform == "ic_room" else None,
                 agent_id=agent_id,
                 round_num=round_num
             ))

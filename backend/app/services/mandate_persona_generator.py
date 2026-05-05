@@ -165,10 +165,10 @@ These instances must share the same background but have slight differences in th
                 p["username"] = f"{arch['name'].lower().replace(' ', '_')}_{i:02d}_{random.randint(10, 99)}"
                 
                 # OASIS Core Requirements (Prevent KeyError)
-                p["mbti"] = "Data-Driven"
-                p["age"] = random.randint(35, 65)
-                p["gender"] = random.choice(["male", "female", "non-binary"])
-                p["country"] = "Global"
+                p["mbti"] = p.get("mbti") or "Data-Driven"
+                p["age"] = p.get("age") or random.randint(35, 65)
+                p["gender"] = p.get("gender") or random.choice(["male", "female", "non-binary"])
+                p["country"] = p.get("country") or "Global"
                 
                 # Fix for UI mapping: map title to profession
                 if "title" in p and "profession" not in p:
@@ -224,6 +224,10 @@ These instances must share the same background but have slight differences in th
                 "archetype": arch["name"],
                 "bio": arch["description"],
                 "mandate_description": arch["mandate"],
-                "persona": f"You are an investment partner acting as a {arch['name']}. {arch['description']}"
+                "persona": f"You are an investment partner acting as a {arch['name']}. {arch['description']}",
+                "mbti": "Data-Driven",
+                "age": random.randint(35, 65),
+                "gender": random.choice(["male", "female", "non-binary"]),
+                "country": "Global"
             })
         return profiles

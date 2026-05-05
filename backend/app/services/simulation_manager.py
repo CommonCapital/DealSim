@@ -7,6 +7,7 @@ OASIS模拟管理器
 import os
 import json
 import shutil
+import random
 from typing import Dict, Any, List, Optional
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -16,6 +17,7 @@ from ..config import Config
 from ..utils.logger import get_logger
 from .zep_entity_reader import ZepEntityReader, FilteredEntities
 from .oasis_profile_generator import OasisProfileGenerator, OasisAgentProfile
+from .mandate_persona_generator import MandatePersonaGenerator
 from .simulation_config_generator import SimulationConfigGenerator, SimulationParameters
 from ..utils.locale import t
 
@@ -288,115 +290,100 @@ class SimulationManager:
             state.entity_types = list(filtered.entity_types)
             
             logger.info(f"读取到 {filtered.total_count} 个原始节点, 过滤后保留 {filtered.filtered_count} 个实体")
-            logger.info(f"出现的实体类型: {state.entity_types}")
-            
-            if progress_callback:
-                progress_callback(
-                    "reading", 100,
-                    t('progress.readingComplete', count=filtered.filtered_count),
-                    current=filtered.filtered_count,
-                    total=filtered.filtered_count
-                )
-            
-            if filtered.filtered_count == 0:
-                error_msg = t('api.noEntitiesFound') if hasattr(t, 'api.noEntitiesFound') else f"未在图谱 {state.graph_id} 中找到符合条件的实体 (总节点: {filtered.total_count})。请确保图谱构建成功且包含有效标签。"
-                state.status = SimulationStatus.FAILED
-                state.error = error_msg
-                self._save_simulation_state(state)
-                logger.error(f"模拟准备失败: {error_msg}")
-                return state
-            
-            # ========== 阶段2: 生成IC成员 Mandate Profile ==========
+                       # ========== 阶段2: 生成模拟人设 (Personas) ==========
+            # 1. 生成 IC 成员人设 (Mandate-based Investors)
             if progress_callback:
                 progress_callback(
                     "generating_profiles", 0,
-                    t('progress.startGenerating'),
+                    "正在生成投审会 (IC) 成员人设...",
                     current=0,
-                    total=20  # 默认生成20个IC成员
+                    total=60
                 )
             
             # 获取图谱节点摘要作为 Claim Context
             claim_context = "\n".join([f"- {n.name}: {n.summary}" for n in filtered.entities])
             
-            from .mandate_persona_generator import MandatePersonaGenerator
-            generator = MandatePersonaGenerator()
-            
-            def profile_progress(current, total, msg):
-                if progress_callback:
-                    progress_callback(
-                        "generating_profiles", 
-                        int(current / total * 100), 
-                        msg,
-                        current=current,
-                        total=total,
-                        item_name=msg
-                    )
-            
-            # 生成 IC 成员 (V1 Spec: 50-100 personas)
-            profiles = generator.generate_mandate_profiles(
+            mandate_generator = MandatePersonaGenerator()
+            ic_profiles = mandate_generator.generate_mandate_profiles(
                 claim_context=claim_context,
                 simulation_requirement=simulation_requirement,
                 count=60
             )
             
-            state.profiles_count = len(profiles)
-            
-            # 数据硬化：确保所有 Profile 都有必须的字段 (mbti, age, gender, country)
-            # 这里的 profiles 是从 generator 拿到的 list
-            import random
-            for p in profiles:
-                if 'mbti' not in p: p['mbti'] = "Data-Driven"
-                if 'age' not in p: p['age'] = random.randint(35, 65)
-                if 'gender' not in p: p['gender'] = random.choice(["male", "female", "non-binary"])
-                if 'country' not in p: p['country'] = "Global"
+            # 2. 生成行业/市场实体人设 (Entity-based Specialists)
+            # 如果启用了 Reddit 或 Twitter，则需要从图谱实体生成对应的人设
+            social_profiles = []
+            if state.enable_reddit or state.enable_twitter:
+                if progress_callback:
+                    progress_callback(
+                        "generating_profiles", 50,
+                        "正在从图谱生成行业专家/机构人设...",
+                        current=0,
+                        total=len(filtered.entities)
+                    )
+                
+                oasis_generator = OasisProfileGenerator()
+                # 限制行业实体数量，避免生成时间过长（取前40个最重要的实体）
+                target_entities = filtered.entities[:40]
+                
+                # 使用并行生成提高效率
+                oasis_profiles_obj = oasis_generator.generate_profiles_from_entities(
+                    entities=target_entities,
+                    use_llm=use_llm_for_profiles,
+                    graph_id=state.graph_id,
+                    parallel_count=parallel_profile_count
+                )
+                # 转换为字典列表
+                social_profiles = [p.to_dict() for p in oasis_profiles_obj if p]
 
-            # 保存 IC 人设 (JSON)
-            profile_path = os.path.join(sim_dir, "ic_profiles.json")
-            with open(profile_path, 'w', encoding='utf-8') as f:
-                json.dump(profiles, f, ensure_ascii=False, indent=2)
-            logger.info(f"保存 IC 人设到: {profile_path}")
+            # 数据硬化：确保所有 Profile 都有必须的字段
+            self._harden_profiles(ic_profiles)
+            self._harden_profiles(social_profiles)
 
-            # 保存 Reddit 人设 (JSON)
+            # 保存 IC 人设 (JSON) - 供 IC Room 使用
+            ic_profile_path = os.path.join(sim_dir, "ic_profiles.json")
+            with open(ic_profile_path, 'w', encoding='utf-8') as f:
+                json.dump(ic_profiles, f, ensure_ascii=False, indent=2)
+            logger.info(f"保存 IC 人设到: {ic_profile_path}")
+
+            # 保存 Reddit 人设 (JSON) - 优先使用行业实体，如果没有则混合一部分投资者
             if state.enable_reddit:
                 reddit_path = os.path.join(sim_dir, "reddit_profiles.json")
+                # 混合策略：行业专家 + 随机一部分投审会成员
+                mixed_reddit = social_profiles + random.sample(ic_profiles, k=min(len(ic_profiles), 10))
                 with open(reddit_path, 'w', encoding='utf-8') as f:
-                    json.dump(profiles, f, ensure_ascii=False, indent=2)
-                logger.info(f"保存 Reddit 人设到: {reddit_path}")
+                    json.dump(mixed_reddit, f, ensure_ascii=False, indent=2)
+                logger.info(f"保存 Reddit 混合人设到: {reddit_path} (专家:{len(social_profiles)}, 投资人:10)")
 
-            # 为了兼容旧脚本和 Dual-World 运行脚本，确保生成 twitter_profiles.csv
+            # 保存 Twitter 人设 (CSV)
             if state.enable_twitter:
                 csv_path = os.path.join(sim_dir, "twitter_profiles.csv")
                 import csv
+                # 混合策略：行业专家 + 随机一部分投审会成员
+                mixed_twitter = social_profiles + random.sample(ic_profiles, k=min(len(ic_profiles), 10))
+                
                 with open(csv_path, 'w', newline='', encoding='utf-8') as f:
                     writer = csv.writer(f)
-                    # 必须包含 mbti, age, gender, country 等 OASIS 核心列
                     writer.writerow(['user_id', 'name', 'username', 'user_char', 'description', 'mbti', 'age', 'gender', 'country'])
-                    for idx, p in enumerate(profiles):
-                        # 构造 OASIS 要求的 Twitter CSV 格式
-                        username = p.get('name', '').lower().replace(' ', '_') + f"_{idx}"
+                    for idx, p in enumerate(mixed_twitter):
+                        username = p.get('username') or p.get('user_name') or (p.get('name', '').lower().replace(' ', '_') + f"_{idx}")
                         user_char = f"{p.get('bio', '')} {p.get('persona', '')}".replace('\n', ' ').replace('\r', ' ')
                         description = p.get('mandate_description', p.get('bio', ''))[:160].replace('\n', ' ').replace('\r', ' ')
                         
                         writer.writerow([
-                            idx,
-                            p.get('name', 'IC Member'),
+                            p.get('user_id', idx),
+                            p.get('name', 'Participant'),
                             username,
                             user_char,
-                            description
+                            description,
+                            p.get('mbti', 'Data-Driven'),
+                            p.get('age', 40),
+                            p.get('gender', 'male'),
+                            p.get('country', 'Global')
                         ])
                 logger.info(f"同时保存 Twitter CSV 格式人设到: {csv_path}")
-                
-                # 保留 JSON 副本以供前端显示或备用
-                with open(os.path.join(sim_dir, "twitter_profiles.json"), 'w', encoding='utf-8') as f:
-                    json.dump(profiles, f, ensure_ascii=False, indent=2)
             
-            if progress_callback:
-                progress_callback(
-                    "generating_profiles", 100,
-                    t('progress.profilesComplete', count=len(profiles)),
-                    current=len(profiles),
-                    total=len(profiles)
-                )
+            state.profiles_count = len(ic_profiles) + len(social_profiles)
             
             # ========== 阶段3: LLM智能生成模拟配置 ==========
             if progress_callback:
@@ -417,6 +404,13 @@ class SimulationManager:
                     total=3
                 )
             
+            # 适配 SimulationConfigGenerator 的进度回调签名 (step, total, msg)
+            def config_progress_adapter(step, total, msg):
+                if progress_callback:
+                    # 映射到 prepare_simulation 的 progress 0-100%
+                    p = int(step / total * 100)
+                    progress_callback("generating_config", p, msg)
+
             sim_params = config_generator.generate_config(
                 simulation_id=simulation_id,
                 project_id=state.project_id,
@@ -425,7 +419,8 @@ class SimulationManager:
                 document_text=document_text,
                 entities=filtered.entities,
                 enable_twitter=state.enable_twitter,
-                enable_reddit=state.enable_reddit
+                enable_reddit=state.enable_reddit,
+                progress_callback=config_progress_adapter
             )
             
             if progress_callback:
@@ -544,3 +539,18 @@ class SimulationManager:
                 f"   - 并行运行双平台: python {scripts_dir}/run_parallel_simulation.py --config {config_path}"
             )
         }
+    
+    def _harden_profiles(self, profiles: List[Dict[str, Any]]):
+        """确保所有 Profile 都有必须的字段 (mbti, age, gender, country)"""
+        import random
+        for p in profiles:
+            if not p.get('mbti'): p['mbti'] = "Data-Driven"
+            if not p.get('age'): p['age'] = random.randint(35, 65)
+            if not p.get('gender'): p['gender'] = random.choice(["male", "female", "non-binary"])
+            if not p.get('country'): p['country'] = "Global"
+            
+            # 确保有 user_id 和 username
+            if 'user_id' not in p: p['user_id'] = random.randint(10000, 99999)
+            if 'username' not in p:
+                name = p.get('name', 'ic_member').lower().replace(' ', '_')
+                p['username'] = f"{name}_{random.randint(100, 999)}"
