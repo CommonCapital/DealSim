@@ -13,8 +13,10 @@ import os
 import json
 import time
 import re
+import threading
 from typing import Dict, Any, List, Optional, Callable
 from dataclasses import dataclass, field
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from enum import Enum
 
@@ -53,6 +55,7 @@ class ReportLogger:
             Config.UPLOAD_FOLDER, 'reports', report_id, 'agent_log.jsonl'
         )
         self.start_time = datetime.now()
+        self._lock = threading.Lock()
         self._ensure_log_file()
     
     def _ensure_log_file(self):
@@ -94,8 +97,9 @@ class ReportLogger:
         }
         
         # 追加写入 JSONL 文件
-        with open(self.log_file_path, 'a', encoding='utf-8') as f:
-            f.write(json.dumps(log_entry, ensure_ascii=False) + '\n')
+        with self._lock:
+            with open(self.log_file_path, 'a', encoding='utf-8') as f:
+                f.write(json.dumps(log_entry, ensure_ascii=False) + '\n')
     
     def log_start(self, simulation_id: str, graph_id: str, simulation_requirement: str):
         """记录报告生成开始"""
@@ -1082,8 +1086,8 @@ class ReportAgent:
         ]
         
         tool_calls_count = 0
-        max_iterations = 5 
-        min_tool_calls = 3 
+        max_iterations = 4 
+        min_tool_calls = 1 
         conflict_retries = 0 
         used_tools = set()  
         all_tools = {"insight_forge", "panorama_search", "quick_search", "interview_agents"}
@@ -1344,28 +1348,23 @@ class ReportAgent:
             total_sections = len(outline.sections)
             generated_sections = [] 
             
-            for i, section in enumerate(outline.sections):
+            # 使用线程池并行生成所有章节
+            def run_section_gen(args):
+                i, section = args
                 section_num = i + 1
                 base_progress = 20 + int((i / total_sections) * 70)
                 
                 ReportManager.update_progress(
                     report_id, "generating", base_progress,
-                    f"正在生成第 {section_num}/{total_sections} 章节: {section.title}",
+                    f"正在并行生成章节: {section.title}",
                     current_section=section.title,
                     completed_sections=completed_section_titles
                 )
 
-                if progress_callback:
-                    progress_callback(
-                        "generating",
-                        base_progress,
-                        f"正在生成第 {section_num}/{total_sections} 章节: {section.title}"
-                    )
-                
                 section_content = self._generate_section_react(
                     section=section,
                     outline=outline,
-                    previous_sections=generated_sections,
+                    previous_sections=[], # 并行生成时不依赖前文，提高速度
                     progress_callback=lambda stage, prog, msg:
                         progress_callback(
                             stage, 
@@ -1376,7 +1375,6 @@ class ReportAgent:
                 )
                 
                 section.content = section_content
-                generated_sections.append(f"## {section.title}\n\n{section_content}")
                 ReportManager.save_section(report_id, section_num, section)
                 completed_section_titles.append(section.title)
 
@@ -1386,14 +1384,15 @@ class ReportAgent:
                         section_index=section_num,
                         full_content=f"## {section.title}\n\n{section_content}"
                     )
-                
-                ReportManager.update_progress(
-                    report_id, "generating", 
-                    base_progress + int(70 / total_sections),
-                    f"章节 {section.title} 生成完成",
-                    current_section=None,
-                    completed_sections=completed_section_titles
-                )
+                return section
+
+            with ThreadPoolExecutor(max_workers=min(total_sections, 6)) as executor:
+                executor.map(run_section_gen, enumerate(outline.sections))
+            
+            ReportManager.update_progress(
+                report_id, "generating", 95, "所有章节并行生成完成，正在组装...",
+                completed_sections=completed_section_titles
+            )
             
             ReportManager.update_progress(
                 report_id, "generating", 95, "正在组装完整报告",

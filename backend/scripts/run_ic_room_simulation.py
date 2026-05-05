@@ -117,7 +117,7 @@ class ICRoomSimulation:
         if not claims_text:
             claims_text = "No specific internal logic node data available."
 
-        for member in active_members:
+        async def process_member(member):
             # LLM 决定该成员本轮针对哪个 Claim 发言
             # 构建 Prompt
             prompt = f"""You are participating in an Investment Committee (IC Room) discussion.
@@ -144,8 +144,8 @@ Please respond entirely in English.
 """
             
             try:
-                # 简单模拟，实际应用中应更复杂地绑定 Claim
-                response = self.llm_client.chat([
+                # 异步发送请求
+                response = await self.llm_client.chat_async([
                     {"role": "system", "content": member.get('persona', "You are an IC member.")},
                     {"role": "user", "content": prompt}
                 ])
@@ -162,6 +162,9 @@ Please respond entirely in English.
                 logger.info(f"[{member.get('name')}] added to discussion in {stage_name}")
             except Exception as e:
                 logger.error(f"Agent {member.get('name')} interaction failed: {e}")
+
+        # 使用 asyncio.gather 并行处理所有成员
+        await asyncio.gather(*(process_member(m) for m in active_members))
 
     async def run(self):
         """运行完整 5 阶段循环"""

@@ -87,7 +87,7 @@ class TimeSimulationConfig:
     total_simulation_hours: int = 72  # 默认模拟72小时（3天）
     
     # 每轮代表的时间（模拟分钟）- 默认60分钟（1小时），加快时间流速
-    minutes_per_round: int = 60
+    minutes_per_round: int = 20
     
     # 每小时激活的Agent数量范围
     agents_per_hour_min: int = 5
@@ -564,7 +564,7 @@ class SimulationConfigGenerator:
 示例：
 {{
     "total_simulation_hours": 72,
-    "minutes_per_round": 60,
+    "minutes_per_round": 20,
     "agents_per_hour_min": 5,
     "agents_per_hour_max": 50,
     "peak_hours": [19, 20, 21, 22],
@@ -598,7 +598,7 @@ class SimulationConfigGenerator:
         """获取默认时间配置（中国人作息）"""
         return {
             "total_simulation_hours": 72,
-            "minutes_per_round": 60,  # 每轮1小时，加快时间流速
+            "minutes_per_round": 20,  # 每轮20分钟，增加颗粒度
             "agents_per_hour_min": max(1, num_entities // 15),
             "agents_per_hour_max": max(5, num_entities // 5),
             "peak_hours": [19, 20, 21, 22],
@@ -630,7 +630,7 @@ class SimulationConfigGenerator:
         
         return TimeSimulationConfig(
             total_simulation_hours=result.get("total_simulation_hours", 72),
-            minutes_per_round=result.get("minutes_per_round", 60),  # 默认每轮1小时
+            minutes_per_round=result.get("minutes_per_round", 20),  # 默认每轮20分钟
             agents_per_hour_min=agents_per_hour_min,
             agents_per_hour_max=agents_per_hour_max,
             peak_hours=result.get("peak_hours", [19, 20, 21, 22]),
