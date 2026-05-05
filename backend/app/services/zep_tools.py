@@ -12,6 +12,7 @@ import time
 import json
 from typing import Dict, Any, List, Optional
 from dataclasses import dataclass, field
+from concurrent.futures import ThreadPoolExecutor
 
 from zep_cloud.client import Zep
 
@@ -988,24 +989,27 @@ class ZepToolsService:
         result.sub_queries = sub_queries
         logger.info(t("console.generatedSubQueries", count=len(sub_queries)))
         
-        # Step 2: 对每个子问题进行语义搜索
+        # Step 2: 对每个子问题进行并行语义搜索
         all_facts = []
         all_edges = []
         seen_facts = set()
         
-        for sub_query in sub_queries:
-            search_result = self.search_graph(
+        def run_sub_query(sq):
+            return self.search_graph(
                 graph_id=graph_id,
-                query=sub_query,
+                query=sq,
                 limit=15,
                 scope="edges"
             )
+
+        with ThreadPoolExecutor(max_workers=min(len(sub_queries), 5)) as executor:
+            search_results = list(executor.map(run_sub_query, sub_queries))
             
+        for search_result in search_results:
             for fact in search_result.facts:
                 if fact not in seen_facts:
                     all_facts.append(fact)
                     seen_facts.add(fact)
-            
             all_edges.extend(search_result.edges)
         
         # 对原始问题也进行搜索
@@ -1034,36 +1038,35 @@ class ZepToolsService:
                 if target_uuid:
                     entity_uuids.add(target_uuid)
         
-        # 获取所有相关实体的详情（不限制数量，完整输出）
+        # 获取所有相关实体的详情（并行获取，限制前30个最相关的实体）
         entity_insights = []
         node_map = {}  # 用于后续关系链构建
         
-        for uuid in list(entity_uuids):  # 处理所有实体，不截断
-            if not uuid:
+        # 限制实体数量，防止并发过高或结果过大
+        target_uuids = list(entity_uuids)[:30]
+        
+        with ThreadPoolExecutor(max_workers=10) as executor:
+            nodes = list(executor.map(self.get_node_detail, target_uuids))
+            
+        for node in nodes:
+            if not node:
                 continue
-            try:
-                # 单独获取每个相关节点的信息
-                node = self.get_node_detail(uuid)
-                if node:
-                    node_map[uuid] = node
-                    entity_type = next((l for l in node.labels if l not in ["Entity", "Node"]), "实体")
-                    
-                    # 获取该实体相关的所有事实（不截断）
-                    related_facts = [
-                        f for f in all_facts 
-                        if node.name.lower() in f.lower()
-                    ]
-                    
-                    entity_insights.append({
-                        "uuid": node.uuid,
-                        "name": node.name,
-                        "type": entity_type,
-                        "summary": node.summary,
-                        "related_facts": related_facts  # 完整输出，不截断
-                    })
-            except Exception as e:
-                logger.debug(f"获取节点 {uuid} 失败: {e}")
-                continue
+            
+            entity_type = next((l for l in node.labels if l not in ["Entity", "Node"]), "实体")
+            
+            # 获取该实体相关的所有事实（不截断）
+            related_facts = [
+                f for f in all_facts 
+                if node.name.lower() in f.lower()
+            ]
+            
+            entity_insights.append({
+                "uuid": node.uuid,
+                "name": node.name,
+                "type": entity_type,
+                "summary": node.summary,
+                "related_facts": related_facts  # 完整输出，不截断
+            })
         
         result.entity_insights = entity_insights
         result.total_entities = len(entity_insights)
