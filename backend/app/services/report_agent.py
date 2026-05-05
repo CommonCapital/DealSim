@@ -471,229 +471,229 @@ class Report:
         }
 
 TOOL_DESC_INSIGHT_FORGE = """\
-【深度漏洞检索 - 强大的审计工具】
-这是专门为 DealSim 设计的检索函数，用于挖掘 deal 中的潜在裂缝。它会：
-1. 自动将你的审计问题分解为多个子问题
-2. 从多个维度检索 IC Room 模拟日志中的信息
-3. 追踪 Claim（主张）与其对应的 Evidence/Risk/Assumption 的逻辑链
-4. 返回最全面、最深度的审计内容
+[Deep Vulnerability Search - Powerful Audit Tool]
+This is a retrieval function specifically designed for DealSim to dig out potential cracks in a deal. It will:
+1. Automatically decompose your audit question into multiple sub-questions.
+2. Retrieve information from IC Room simulation logs across multiple dimensions.
+3. Trace the logical chain between Claims and their corresponding Evidence/Risk/Assumption.
+4. Return the most comprehensive and deep audit content.
 
-【使用场景】
-- 需要分析某个特定主张（Claim）的脆弱性
-- 需要寻找不同投资人之间的意见分歧点
-- 需要获取支撑报告章节的客观审计素材
+[When to use]
+- When you need to analyze the vulnerability of a specific Claim.
+- When you need to find points of disagreement between different investors.
+- When you need to gather objective audit material to support report sections.
 
-【返回内容】
-- 原始对话记录（直接证据）
-- 脆弱性评分与逻辑漏洞
-- 风险传导链条分析"""
+[Return Content]
+- Original dialogue logs (direct evidence)
+- Vulnerability scores and logical loopholes
+- Risk transmission chain analysis"""
 
 TOOL_DESC_PANORAMA_SEARCH = """\
-【广度审计 - 获取全貌视图】
-用于获取整个 IC Room Interrogation 的全貌，特别适合了解审计过程。它会：
-1. 获取所有五个阶段（Introduction to Summary）的完整逻辑流
-2. 追踪每个 Claim 在不同阶段受到的压力变化
-3. 帮助你了解 "脆弱性" 是如何从细枝末节汇聚成致命伤的
+[Breadth Audit - Get the Big Picture]
+Used to get the full view of the IC Room Interrogation, especially for understanding the audit process. It will:
+1. Get the complete logical flow of all five stages (Introduction to Summary).
+2. Trace the pressure changes on each Claim across different stages.
+3. Help you understand how "vulnerability" accumulates from minor details into fatal flaws.
 
-【使用场景】
-- 需要了解五个审计阶段的完整逻辑发展
-- 需要对比不同时间点（阶段）的共识平衡
-- 需要获取所有相关的 Claim 和证据映射
+[When to use]
+- When you need to understand the full logical development of the five audit stages.
+- When you need to compare consensus balance at different points in time (stages).
+- When you need to get all relevant Claims and evidence mapping.
 
-【返回内容】
-- 当前审计共识
-- 阶段性压力测试记录
-- 所有涉及的主张与风险点"""
+[Return Content]
+- Current audit consensus
+- Stage-by-stage pressure test records
+- All involved claims and risk points"""
 
 TOOL_DESC_QUICK_SEARCH = """\
-【简单检索 - 快速核实】
-轻量级的快速检索工具，适合简单的、直接的事实核实。
+[Simple Search - Fast Verification]
+A lightweight fast retrieval tool, suitable for simple and direct factual verification.
 
-【使用场景】
-- 核实某个具体的财务数据是否被挑战
-- 查找特定的风险点是否在模拟中出现
-- 简单的信息检索
+[When to use]
+- Verifying whether specific financial data has been challenged.
+- Finding whether specific risk points appeared in the simulation.
+- Simple information retrieval.
 
-【返回内容】
-- 与查询最相关的日志条目"""
+[Return Content]
+- Log entries most relevant to the query"""
 
 TOOL_DESC_INTERVIEW_AGENTS = """\
-【定向回访 - 与投资 Archetype 深入核实】
-调用 DealSim 的采访 API，对刚才参与 IC 审查的投资人（Archetypes）进行定向回访！
-这允许你追问那些在 Interrogation 阶段未能完全展开的细节。
+[Targeted Follow-up - Verify deeply with Investment Archetypes]
+Calls the DealSim Interview API to conduct targeted follow-ups with the investors (Archetypes) who just participated in the IC review!
+This allows you to ask follow-up questions about details that were not fully expanded during the Interrogation phase.
 
-【使用场景】
-- 需要从特定投资人视角了解决策逻辑（为什么 skepticalist 会投反对票？）
-- 需要深挖某个特定的风险点在特定投资框架下的分量
-- 补充报告中的 "Archetype Perspectives" 章节
+[When to use]
+- When you need to understand decision logic from a specific investor's perspective (why would a skepticalist vote NO?).
+- When you need to dig deeper into the weight of a specific risk point under a specific investment framework.
+- To supplement the "Archetype Perspectives" section in the report.
 
-【返回内容】
-- 指定投资人的决策逻辑深度阐述
-- 第一人称的风险定性"""
-
-# ── 大纲规划 prompt ──
+[Return Content]
+- In-depth elaboration of the specified investor's decision logic
+- First-person risk characterization"""
 
 # ── 大纲规划 prompt ──
 
-PLAN_SYSTEM_PROMPT = """你是一个「DealSim IC 审查报告」专家，负责将投审会（IC Room）的对抗性模拟结果转化为一份正式的投资审计报告。
+# ── 大纲规划 prompt ──
 
-## 审计目标
-你的核心任务是回答："给定这个 Deal，什么会首先崩溃？"。你正在观察的是一群具有极高专业度和特定投资授权（Mandates）的 Archetypes 对该交易进行的压力测试。
+PLAN_SYSTEM_PROMPT = """You are a "DealSim IC Audit Report" expert, responsible for transforming adversarial simulation results from the IC Room into a formal Investment Audit Report.
 
-## 报告结构要求 (必须包含且仅包含以下 6 个章节)
-1. **什么会首先崩溃 (What breaks first)**: 识别最致命的单一风险点或逻辑断层。这是对交易脆弱性的直击。
-2. **核心反对意见 (Top objections)**: 总结 IC 成员最集中的攻击点。必须以「反对意见表」的形式呈现，包含：反对者身份、核心论点、严重程度（Critical/Major/Minor）。
-3. **缺失的尽调信息 (Missing diligence)**: 列出模拟过程中发现的、现有文档未覆盖的关键信息缺口。
-4. **决策画像透视 (Split by persona type)**: 按照不同的投资授权（如：Conservative PE vs Growth Equity）拆解他们的分歧。体现不同利益方的对立。
-5. **改变局面的证据 (What evidence would change minds)**: 识别出哪些具体的数据或证明材料能有效抵消上述反对意见。
-6. **投委会最终建议 (Investment Committee Recommendation)**: 一个明确的 GO/NO-GO 结论，包含 0-100 的信心得分（Confidence Score），以及最终的风险提示。
+## Audit Objective
+Your core task is to answer: "Given this Deal, what breaks first?". You are observing a stress test conducted by professional Archetypes with specific investment mandates (Mandates).
 
-## 任务要求
-请输出 JSON 格式的报告大纲。确保标题专业且符合 V1 规范。
+## Report Structure Requirements (Must contain exactly these 6 sections)
+1. **What breaks first**: Identify the most fatal single risk point or logical fault. This is a direct hit on the deal's vulnerability.
+2. **Top objections**: Summarize the most concentrated attack points from IC members. Must be presented as an "Objection Table" including: Objector Identity, Core Argument, Severity (Critical/Major/Minor).
+3. **Missing diligence**: List critical information gaps discovered during the simulation that are not covered by existing documents.
+4. **Split by persona type**: Deconstruct their differences according to different investment mandates (e.g.: Conservative PE vs Growth Equity). Reflect the opposition between different stakeholders.
+5. **What evidence would change minds**: Identify specific data or proof materials that could effectively offset the above objections.
+6. **Investment Committee Recommendation**: A clear GO/NO-GO conclusion, including a Confidence Score (0-100), and final risk warnings.
+
+## Task Requirements
+Please output the report outline in JSON format. Ensure the titles are professional and comply with V1 specifications.
 
 ```json
 {
     "title": "DealSim Diagnostic Audit: [Deal Name]",
-    "summary": "针对该交易的 5 阶段对抗性审计总结",
+    "summary": "Targeted 5-stage adversarial audit summary for this deal",
     "sections": [
         {
-            "title": "章节标题",
-            "description": "章节分析重点"
+            "title": "Section Title",
+            "description": "Section analysis focus"
         }
     ]
 }
 ```
 """
 
-PLAN_USER_PROMPT_TEMPLATE = """【审议项目背景】
-项目/主张描述：{simulation_requirement}
+PLAN_USER_PROMPT_TEMPLATE = """[Review Project Background]
+Project/Claim Description: {simulation_requirement}
 
-【审计规模】
-- 参与审计的投资人总数: {profiles_count}
-- 审计产生的交互记录: {total_edges}
-- 识别出的关键主张 (Claims): {total_nodes}
+[Audit Scale]
+- Total Investors involved: {profiles_count}
+- Interaction logs generated: {total_edges}
+- Key claims identified: {total_nodes}
 
-【审计发现摘要】
+[Audit Findings Summary]
 {related_facts_json}
 
-请基于以上 IC Room 的模拟结果，规划一份专业的「DealSim Diagnostic Audit」。
-确保章节完全符合 6 章节标准，逻辑链严密。"""
+Please plan a professional "DealSim Diagnostic Audit" based on the above IC Room simulation results.
+Ensure the sections fully comply with the 6-section standard and the logic is tight."""
 
 # ── 章节生成 prompt ──
 
-SECTION_SYSTEM_PROMPT_TEMPLATE = """你是一个「DealSim IC 审查报告」专家，正在撰写一份正式投资审计报告中的特定章节。
+SECTION_SYSTEM_PROMPT_TEMPLATE = """You are a "DealSim IC Audit Report" expert, currently writing a specific section of a formal investment audit report.
 
-报告标题: {report_title}
-核心摘要: {report_summary}
-项目/主张描述: {simulation_requirement}
+Report Title: {report_title}
+Core Summary: {report_summary}
+Project/Claim Description: {simulation_requirement}
 
-当前要撰写的章节: {section_title}
+Current Section: {section_title}
 
-## 核心理念
-这份报告不是总结，而是「审计」。你必须识别出最显著的问题、最大的逻辑断层和最不可信的数据。
-你正在分析的是具有 Check size, Return threshold, Stage preference, Loss aversion, Sector bias, Time horizon 等 9 个维度的专业投资人的对抗性反馈。
+## Core Concept
+This report is not a summary, but an "Audit". You must identify the most prominent problems, the largest logical gaps, and the most untrustworthy data.
+You are analyzing adversarial feedback from professional investors with 9 dimensions including Check size, Return threshold, Stage preference, Loss aversion, Sector bias, and Time horizon.
 
-## 撰写准则
-1. **基于审计日志**: 所有结论必须来自 IC Room 的真实交互日志。禁止编造。
-2. **利益相关方对比**: 展示 Conservative PE 为何在杠杆率上纠结，而 Growth Equity 为何在 CAC/LTV 上防御。
-3. **结构化输出**: 
-   - 如果是「Top objections」，必须使用 Markdown 表格。
-   - 如果是「Missing diligence」，必须使用分项列表。
-4. **专业语气**: 使用金融术语（MoM, IRR, Exit Multiple, Burn Rate, TAM, GTM, etc.）。
-5. **格式规范**: ❌ 禁止使用 # 或 ## 等 Markdown 标题。✅ 使用 **粗体** 代替。
+## Writing Guidelines
+1. **Based on Audit Logs**: All conclusions must come from real IC Room interaction logs. Fabrication is prohibited.
+2. **Stakeholder Comparison**: Show why Conservative PE is struggling with leverage while Growth Equity is defending CAC/LTV.
+3. **Structured Output**: 
+   - If it's "Top objections", a Markdown table must be used.
+   - If it's "Missing diligence", a bulleted list must be used.
+4. **Professional Tone**: Use financial terms (MoM, IRR, Exit Multiple, Burn Rate, TAM, GTM, etc.).
+5. **Format Specification**: ❌ DO NOT use # or ## Markdown headers. ✅ Use **Bold** instead.
 
-## 可用工具
+## Available Tools
 {tools_description}
 
-## 工作流
-你必须通过多轮 Thought -> Tool Call -> Result 的 ReACT 模式来确证你的结论，最后输出 "Final Answer:"。
+## Workflow
+You must confirm your conclusions through multiple rounds of Thought -> Tool Call -> Result ReACT mode, and finally output "Final Answer:".
 
-现在开始分析。"""
+Begin analysis now."""
 
 SECTION_USER_PROMPT_TEMPLATE = """\
-已完成的章节内容（请仔细阅读，避免重复）：
+Completed section content (Read carefully to avoid repetition):
 {previous_content}
 
 ═══════════════════════════════════════════════════════════════
-【当前任务】撰写章节: {section_title}
+[Current Task] Writing Section: {section_title}
 ═══════════════════════════════════════════════════════════════
 
-【重要提醒】
-1. 仔细阅读上方已完成的章节，避免重复相同的内容！
-2. 开始前必须先调用工具获取模拟数据
-3. 请混合使用不同工具，不要只用一种
-4. 报告内容必须来自检索结果，不要使用自己的知识
+[Important Reminder]
+1. Read the completed sections above carefully to avoid repeating the same content!
+2. You must call a tool to get simulation data before starting
+3. Please use a mix of different tools, don't just use one
+4. Report content must come from retrieval results, do not use your own knowledge
 
-【⚠️ 格式警告 - 必须遵守】
-- ❌ 不要写任何标题（#、##、###、####都不行）
-- ❌ 不要写"{section_title}"作为开头
-- ✅ 章节标题由系统自动添加
-- ✅ 直接写正文，用**粗体**代替小节标题
+[⚠️ Format Warning - MUST COMPLY]
+- ❌ Do not write any headers (#, ##, ###, #### are all not allowed)
+- ❌ Do not write "{section_title}" as the start
+- ✅ Section titles are automatically added by the system
+- ✅ Write the body directly, using **Bold** instead of sub-section headers
 
-请开始：
-1. 首先思考（Thought）这个章节需要什么信息
-2. 然后调用工具（Action）获取模拟数据
-3. 收集足够信息后输出 Final Answer（纯正文，无任何标题）"""
+Please start:
+1. First think (Thought) what information this section needs
+2. Then call a tool (Action) to get simulation data
+3. After gathering enough information, output Final Answer (pure body, no headers)"""
 
 # ── ReACT 循环内消息模板 ──
 
 REACT_OBSERVATION_TEMPLATE = """\
-Observation（审计发现）:
+Observation (Audit Finding):
 
-═══ 工具 {tool_name} 返回 ═══
+═══ Tool {tool_name} returned ═══
 {result}
 
 ═══════════════════════════════════════════════════════════════
-已调用工具 {tool_calls_count}/{max_tool_calls} 次（已用: {used_tools_str}）{unused_hint}
-- 如果证据充分：以 "Final Answer:" 开头输出审计结论（必须引用上述日志原文）
-- 如果需要更多细节：调用一个工具继续检索
+Called tools {tool_calls_count}/{max_tool_calls} times (Used: {used_tools_str}) {unused_hint}
+- If evidence is sufficient: Output audit conclusion starting with "Final Answer:" (must cite the original logs above)
+- If more detail is needed: Call a tool to continue retrieval
 ═══════════════════════════════════════════════════════════════"""
 
 REACT_INSUFFICIENT_TOOLS_MSG = (
-    "【注意】你只调用了{tool_calls_count}次工具，至少需要{min_tool_calls}次。"
-    "请再调用审计工具获取更多证据，然后再输出 Final Answer。{unused_hint}"
+    "[Note] You have only called tools {tool_calls_count} times, at least {min_tool_calls} are required. "
+    "Please call audit tools again to get more evidence, and then output Final Answer. {unused_hint}"
 )
 
 REACT_INSUFFICIENT_TOOLS_MSG_ALT = (
-    "当前只调用了 {tool_calls_count} 次工具，至少需要 {min_tool_calls} 次。"
-    "请调用审计工具获取更多证据。{unused_hint}"
+    "Currently only called {tool_calls_count} tools, at least {min_tool_calls} are required. "
+    "Please call audit tools to get more evidence. {unused_hint}"
 )
 
 REACT_TOOL_LIMIT_MSG = (
-    "审计工具调用次数已达上限（{tool_calls_count}/{max_tool_calls}），不能再调用工具。"
-    '请立即基于已获取的证据，以 "Final Answer:" 开头输出章节内容。'
+    "Audit tool call limit reached ({tool_calls_count}/{max_tool_calls}), cannot call tools anymore. "
+    'Please immediately output section content starting with "Final Answer:" based on the evidence already obtained.'
 )
 
-REACT_UNUSED_TOOLS_HINT = "\n💡 你还没有使用过: {unused_list}，建议尝试不同工具获取多角度信息"
+REACT_UNUSED_TOOLS_HINT = "\n💡 You haven't used: {unused_list}, it is suggested to try different tools to get multi-perspective information"
 
-REACT_FORCE_FINAL_MSG = "已达到审计工具调用限制，请直接输出 Final Answer: 并生成章节内容。"
+REACT_FORCE_FINAL_MSG = "Audit tool call limit reached, please output Final Answer: and generate section content directly."
 
 # ── Chat/QA prompt ──
 
 CHAT_SYSTEM_PROMPT_TEMPLATE = """\
-你是一个 DealSim 投资决策助手。
+You are a DealSim Investment Decision Assistant.
 
-【背景】
-正在审议的项目: {simulation_requirement}
+[Background]
+Project being reviewed: {simulation_requirement}
 
-【已生成的 IC Prep Report】
+[Generated IC Prep Report]
 {report_content}
 
-【规则】
-1. 优先基于报告内容回答关于 deal 脆弱性的问题
-2. 保持专业、审慎的投资审计语气
-3. 仅在需要深挖报告未提及的细节时，才调用审计工具
-4. 回答要直接，聚焦于风险与决策建议
+[Rules]
+1. Prioritize answering questions about deal vulnerability based on report content
+2. Maintain a professional and cautious investment audit tone
+3. Only call audit tools when you need to dig deep into details not mentioned in the report
+4. Answers should be direct, focusing on risk and decision recommendations
 
-【可用工具】
+[Available Tools]
 {tools_description}
 
-【回答风格】
-- 使用专业投资术语
-- 优先给出定性或定量结论
-- 使用 > 引用原始对话日志作为佐证"""
+[Answer Style]
+- Use professional investment terms
+- Prioritize giving qualitative or quantitative conclusions
+- Use > to cite original dialogue logs as evidence."""
 
-CHAT_OBSERVATION_SUFFIX = "\n\n请简洁回答审计问题。"
+CHAT_OBSERVATION_SUFFIX = "\n\nPlease answer the audit question concisely."
 
 
 # ═══════════════════════════════════════════════════════════════
