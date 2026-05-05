@@ -110,36 +110,37 @@ class ICRoomSimulation:
         active_members = random.sample(self.profiles, k=min(len(self.profiles), 8))
         
         # 注入市场情绪（如果有的话）
-        market_context = getattr(self, 'market_sentiment', "暂无公开市场情绪数据。")
+        market_context = getattr(self, 'market_sentiment', "No public market sentiment data available.")
         
         # 准备 Claims 文本
         claims_text = "\n".join([f"- {c.name}: {c.summary}" for c in self.claims[:12]])
         if not claims_text:
-            claims_text = "暂无具体的内部逻辑节点数据。"
+            claims_text = "No specific internal logic node data available."
 
         for member in active_members:
             # LLM 决定该成员本轮针对哪个 Claim 发言
             # 构建 Prompt
-            prompt = f"""你正在参与投审会（IC Room）的讨论。
-当前阶段: {stage_name}
+            prompt = f"""You are participating in an Investment Committee (IC Room) discussion.
+Current Stage: {stage_name}
 
-【质询依据：双维度情报】
-1. 内部逻辑节点 (Internal Logic Nodes): 包含项目提案中的核心投资声明与事实节点：
+[Interrogation Basis: Dual-Dimension Intelligence]
+1. Internal Logic Nodes: Contains the core investment claims and factual nodes from the project proposal:
 {claims_text}
 
-2. 专家思维节点 (Expert Thought Nodes): 以下是公开市场（Twitter/Reddit）中反馈出的核心质疑点，请你在质询时重点结合这些反馈：
+2. Expert Thought Nodes: Below are the core skepticisms and feedback from the public market (Twitter/Reddit). Please heavily incorporate these into your interrogation:
 {market_context}
 
-你的授权（Mandate）: {member.get('mandate_description')}
-你的决策逻辑: {json.dumps(member.get('decision_logic'))}
+Your Mandate: {member.get('mandate_description')}
+Your Decision Logic: {json.dumps(member.get('decision_logic'))}
 
-请根据你的授权和上述市场反馈，针对本次交易的核心逻辑进行质询或评论。
-你需要表现出专业、挑剔且具有洞察力的风格。
+Based on your mandate and the market feedback above, please interrogate or comment on the core logic of this transaction.
+You must exhibit a professional, highly critical, and insightful style.
 
-输出要求：
-1. 选择一个主要关注点
-2. 提出一个尖锐的问题或发表独立见解
-3. 给出你的质询文本（150字以内）
+Output Requirements:
+1. Select a primary focus area.
+2. Ask a sharp, pointed question or provide an independent insight.
+3. Provide your interrogation text (within 150 words).
+Please respond entirely in English.
 """
             
             try:

@@ -1568,9 +1568,9 @@ def start_simulation():
                     run_state = SimulationRunner.get_run_state(simulation_id)
                     if run_state and run_state.runner_status.value == "running":
                         # 进程确实在运行
-                        if force:
-                            # 强制模式：停止运行中的模拟
-                            logger.info(f"强制模式：停止运行中的模拟 {simulation_id}")
+                        if force or platform == "ic_room":
+                            # 强制模式，或切换到ic_room（需要杀掉前置的parallel守护进程但保留日志）
+                            logger.info(f"停止运行中的模拟 {simulation_id} (force={force}, platform={platform})")
                             try:
                                 SimulationRunner.stop_simulation(simulation_id)
                             except Exception as e:

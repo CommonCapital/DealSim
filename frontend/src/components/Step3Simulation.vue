@@ -529,6 +529,15 @@ const fetchRunStatus = async () => {
         prevTwitterRound.value = data.current_round
       }
       
+      // 处理失败状态
+      if (data.runner_status === 'failed') {
+        addLog(`[Error] Simulation engine failed: ${data.error || 'Unknown error'}`)
+        phase.value = 2
+        stopPolling()
+        emit('update-status', 'error')
+        return
+      }
+      
       // 检测模拟是否已完成
       // Parallel 阶段使用配置的轮数，IC Room 阶段固定 5 轮
       let totalThreshold = props.maxRounds || data.total_rounds || 999

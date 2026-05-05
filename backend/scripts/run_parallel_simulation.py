@@ -214,6 +214,69 @@ class CommandType:
     CLOSE_ENV = "close_env"
 
 
+def validate_profiles(profile_path: str, platform: str) -> bool:
+    """
+    预检 Profile 文件，如果缺少必须的字段（如 bio, mbti 等），则自动补全默认值并保存，
+    防止 simulation 运行时出现 KeyError 等错误。
+    """
+    required_fields = {
+        'mbti': 'Data-Driven', 
+        'age': 35, 
+        'gender': 'neutral', 
+        'country': 'Global',
+        'bio': 'Industry participant with focus on market dynamics.',
+        'persona': 'Professional participant evaluating opportunities.'
+    }
+    
+    try:
+        modified = False
+        if platform == 'reddit':
+            with open(profile_path, 'r', encoding='utf-8') as f:
+                profiles = json.load(f)
+                if not isinstance(profiles, list):
+                    print(f"错误: Reddit Profile 文件格式错误，应为列表")
+                    return False
+                for p in profiles:
+                    for field, default_val in required_fields.items():
+                        if not p.get(field):
+                            p[field] = default_val
+                            modified = True
+            if modified:
+                with open(profile_path, 'w', encoding='utf-8') as f:
+                    json.dump(profiles, f, indent=2, ensure_ascii=False)
+                print(f"自动修复了 Reddit Profiles 中的缺失字段: {profile_path}")
+                
+        elif platform == 'twitter':
+            import csv
+            rows = []
+            fieldnames = []
+            with open(profile_path, 'r', encoding='utf-8') as f:
+                reader = csv.DictReader(f)
+                fieldnames = reader.fieldnames if reader.fieldnames else []
+                # Ensure all required fields exist in header
+                for field in required_fields.keys():
+                    if field not in fieldnames:
+                        fieldnames.append(field)
+                        modified = True
+                
+                for row in reader:
+                    for field, default_val in required_fields.items():
+                        if not row.get(field):
+                            row[field] = default_val
+                            modified = True
+                    rows.append(row)
+            
+            if modified:
+                with open(profile_path, 'w', encoding='utf-8', newline='') as f:
+                    writer = csv.DictWriter(f, fieldnames=fieldnames)
+                    writer.writeheader()
+                    writer.writerows(rows)
+                print(f"自动修复了 Twitter Profiles 中的缺失字段: {profile_path}")
+        return True
+    except Exception as e:
+        print(f"预检 Profile 失败: {e}")
+        return False
+
 class ParallelIPCHandler:
     """
     双平台IPC命令处理器
@@ -253,39 +316,6 @@ class ParallelIPCHandler:
                 "timestamp": datetime.now().isoformat()
             }, f, ensure_ascii=False, indent=2)
 
-def validate_profiles(profile_path: str, platform: str) -> bool:
-    """
-    预检 Profile 文件，确保包含 OASIS 必须的字段
-    防止 simulation 运行时出现 KeyError: 'mbti' 等错误
-    """
-    required_fields = ['mbti', 'age', 'gender', 'country']
-    
-    try:
-        if platform == 'reddit':
-            with open(profile_path, 'r', encoding='utf-8') as f:
-                profiles = json.load(f)
-                if not isinstance(profiles, list):
-                    print(f"错误: Reddit Profile 文件格式错误，应为列表")
-                    return False
-                for i, p in enumerate(profiles):
-                    missing = [f for f in required_fields if not p.get(f)]
-                    if missing:
-                        print(f"错误: Reddit Profile (index {i}, name={p.get('name')}) 缺失字段: {missing}")
-                        return False
-        elif platform == 'twitter':
-            import csv
-            with open(profile_path, 'r', encoding='utf-8') as f:
-                reader = csv.DictReader(f)
-                for i, row in enumerate(reader):
-                    missing = [f for f in required_fields if not row.get(f)]
-                    if missing:
-                        print(f"错误: Twitter Profile (index {i}, username={row.get('username')}) 缺失字段: {missing}")
-                        return False
-        return True
-    except Exception as e:
-        print(f"预检 Profile 失败: {e}")
-        return False
-    
     def poll_command(self) -> Optional[Dict[str, Any]]:
         """轮询获取待处理命令"""
         if not os.path.exists(self.commands_dir):
