@@ -5,7 +5,7 @@ description = "DealSim - 简洁通用的群体智能引擎，预测万物"
 requires-python = ">=3.11"
 license = { text = "AGPL-3.0" }
 authors = [
-    { name = "DealSim Team" }
+    { name = "Nursan Omarov" }
 ]
 
 dependencies = [

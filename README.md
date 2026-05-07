@@ -84,9 +84,9 @@ DealSim's simulation engine is powered by **[OASIS (Open Agent Social Interactio
 
 Built by **Nursan Omarov**.
 
-This software is provided for personal and internal business use only. 
-- **Allowed**: Personal use, modifications, and enhancements.
-- **Prohibited**: Monetization and distribution are strictly prohibited.
+This software is open source. 
+- **Allowed**: Personal use, commercial use, modifications, and distribution.
+- **Monetization**: You are free to monetize services or products built with this software under the terms of the GNU AGPLv3 License.
 
 See the [LICENSE](LICENSE) file for the full legal text.
 

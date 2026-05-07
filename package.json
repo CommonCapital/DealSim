@@ -17,6 +17,6 @@
   "engines": {
     "node": ">=18.0.0"
   },
-  "license": "Proprietary",
+  "license": "AGPL-3.0",
   "author": "Nursan Omarov"
 }

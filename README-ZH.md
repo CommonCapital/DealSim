@@ -84,9 +84,9 @@ DealSim 的仿真引擎由 **[OASIS (Open Agent Social Interaction Simulations)]
 
 由 **Nursan Omarov** 开发。
 
-本软件仅供个人和内部业务使用。
-- **允许**：个人使用、修改和增强。
-- **禁止**：严禁商业化（盈利）和分发。
+本软件已开源。
+- **允许**：个人使用、商业用途、修改和分发。
+- **商业化**：您可以根据 GNU AGPLv3 许可证条款，自由地对基于本软件构建的服务或产品进行商业化。
 
 有关完整的法律文本，请参阅 [LICENSE](LICENSE) 文件。
 
