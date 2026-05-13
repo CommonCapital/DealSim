@@ -349,6 +349,8 @@
     "requireProjectId": "Please provide project_id",
     "configError": "Configuration error: {details}",
     "zepApiKeyMissing": "ZEP_API_KEY not configured",
+    "zepLimitExceeded": "Zep account has reached the Episode usage limit (403 Forbidden). Please check your Zep Cloud account quota or try increasing the chunk size to reduce the number of Episodes.",
+    "zepRateLimitExceeded": "Zep API rate limit exceeded (429 Too Many Requests). Please wait a few moments before retrying.",
     "ontologyNotGenerated": "Ontology not yet generated. Please call /ontology/generate first.",
     "graphBuilding": "Graph build in progress. Do not resubmit. To force rebuild, add force: true.",
     "textNotFound": "Extracted text content not found",

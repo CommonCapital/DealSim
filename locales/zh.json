@@ -339,6 +339,8 @@
     "requireProjectId": "请提供 project_id",
     "configError": "配置错误: {details}",
     "zepApiKeyMissing": "ZEP_API_KEY未配置",
+    "zepLimitExceeded": "Zep 账户已达到 Episode 使用限制 (403 Forbidden)。请检查 Zep Cloud 账户额度或尝试增加切块大小以减少 Episode 数量。",
+    "zepRateLimitExceeded": "Zep API 请求频率超限 (429 Too Many Requests)。请稍等片刻（约60秒）后再试。",
     "ontologyNotGenerated": "项目尚未生成本体，请先调用 /ontology/generate",
     "graphBuilding": "图谱正在构建中，请勿重复提交。如需强制重建，请添加 force: true",
     "textNotFound": "未找到提取的文本内容",

@@ -46,8 +46,8 @@ class Project:
     
     # 配置
     simulation_requirement: Optional[str] = None
-    chunk_size: int = 500
-    chunk_overlap: int = 50
+    chunk_size: int = Config.DEFAULT_CHUNK_SIZE
+    chunk_overlap: int = Config.DEFAULT_CHUNK_OVERLAP
     
     # 错误信息
     error: Optional[str] = None
@@ -92,8 +92,8 @@ class Project:
             graph_id=data.get('graph_id'),
             graph_build_task_id=data.get('graph_build_task_id'),
             simulation_requirement=data.get('simulation_requirement'),
-            chunk_size=data.get('chunk_size', 500),
-            chunk_overlap=data.get('chunk_overlap', 50),
+            chunk_size=data.get('chunk_size', Config.DEFAULT_CHUNK_SIZE),
+            chunk_overlap=data.get('chunk_overlap', Config.DEFAULT_CHUNK_OVERLAP),
             error=data.get('error')
         )
 

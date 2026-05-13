@@ -194,11 +194,17 @@ class GraphBuilderService:
         """创建Zep图谱（公开方法）"""
         graph_id = f"dealsim_{uuid.uuid4().hex[:16]}"
         
-        self.client.graph.create(
-            graph_id=graph_id,
-            name=name,
-            description="DealSim Social Simulation Graph"
-        )
+        try:
+            self.client.graph.create(
+                graph_id=graph_id,
+                name=name,
+                description="DealSim Social Simulation Graph"
+            )
+        except Exception as e:
+            error_str = str(e)
+            if "429" in error_str or "Rate limit" in error_str:
+                raise Exception(t('api.zepRateLimitExceeded'))
+            raise
         
         return graph_id
     
@@ -338,6 +344,11 @@ class GraphBuilderService:
                 time.sleep(1)
                 
             except Exception as e:
+                error_str = str(e)
+                if "Account is over the episode usage limit" in error_str:
+                    # 使用翻译后的友好提示
+                    raise Exception(t('api.zepLimitExceeded'))
+                
                 if progress_callback:
                     progress_callback(t('progress.batchFailed', batch=batch_num, error=str(e)), 0)
                 raise
@@ -373,8 +384,11 @@ class GraphBuilderService:
                     )
                 break
             
-            # 检查每个 episode 的处理状态
-            for ep_uuid in list(pending_episodes):
+            # 优化：不要一次性检查所有 episode，这会触发 429 频率限制
+            # 我们每次只检查一小部分（例如 5 个），或者只检查最早的那个
+            check_list = list(pending_episodes)[:10] 
+            
+            for ep_uuid in check_list:
                 try:
                     episode = self.client.graph.episode.get(uuid_=ep_uuid)
                     is_processed = getattr(episode, 'processed', False)
@@ -382,20 +396,29 @@ class GraphBuilderService:
                     if is_processed:
                         pending_episodes.remove(ep_uuid)
                         completed_count += 1
+                    
+                    # 每次请求后微小延迟，保护频率
+                    time.sleep(0.5)
                         
                 except Exception as e:
-                    # 忽略单个查询错误，继续
+                    error_str = str(e)
+                    if "429" in error_str or "Rate limit" in error_str:
+                        # 如果遇到频率限制，立即停止本轮检查并等待更久
+                        time.sleep(10)
+                        break
                     pass
             
             elapsed = int(time.time() - start_time)
             if progress_callback:
+                # 估算总完成进度（基于已确认完成的比例）
                 progress_callback(
                     t('progress.zepProcessing', completed=completed_count, total=total_episodes, pending=len(pending_episodes), elapsed=elapsed),
                     completed_count / total_episodes if total_episodes > 0 else 0
                 )
             
             if pending_episodes:
-                time.sleep(3)  # 每3秒检查一次
+                # 每轮检查之间等待更久
+                time.sleep(5)
         
         if progress_callback:
             progress_callback(t('progress.processingComplete', completed=completed_count, total=total_episodes), 1.0)
